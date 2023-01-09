@@ -16,7 +16,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     private BufferedOutputStream out;
     private volatile boolean connected = true;
 
-    public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, MessagingProtocol<T> protocol) {
+    public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, MessagingProtocol<T> protocol) { //for tpc
         this.sock = sock;
         this.encdec = reader;
         this.protocol = protocol;
@@ -55,6 +55,16 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
 
     @Override
     public void send(T msg) {
-        //IMPLEMENT IF NEEDED
+        if (msg == null) //if the message is null, we don't want to send it
+            return;
+        else{
+            try {
+                //if the message is not null, we want to send it
+                out.write(encdec.encode(msg)); //encode the message
+                out.flush();
+            } catch (IOException e) {
+                System.out.println(e); //if there is an exception, print it
+            }
+        }
     }
 }

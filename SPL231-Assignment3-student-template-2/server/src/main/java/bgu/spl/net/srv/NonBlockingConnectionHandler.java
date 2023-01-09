@@ -21,7 +21,7 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
     private final SocketChannel chan;
     private final Reactor reactor;
 
-    public NonBlockingConnectionHandler(
+    public NonBlockingConnectionHandler( //for reactor
             MessageEncoderDecoder<T> reader,
             MessagingProtocol<T> protocol,
             SocketChannel chan,
@@ -118,6 +118,11 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
 
     @Override
     public void send(T msg) {
-        //IMPLEMENT IF NEEDED
+        if(msg==null) //if the message is null, we close the connection
+            return;
+        else {
+            writeQueue.add(ByteBuffer.wrap(encdec.encode(msg))); //add the message to the write queue
+            reactor.updateInterestedOps(chan, SelectionKey.OP_READ | SelectionKey.OP_WRITE); //update the interested ops
+        }
     }
 }

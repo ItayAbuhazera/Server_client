@@ -1,6 +1,7 @@
 package bgu.spl.net.srv;
 
-import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface Connections<T> {
 
@@ -9,4 +10,14 @@ public interface Connections<T> {
     void send(String channel, T msg);
 
     void disconnect(int connectionId);
+
+    void subscribe(int connectionId, String channel);
+
+    void unsubscribe(int connectionId, String channel);
+
+    void unsubscribeAll(int connectionId);
+
+    void connect(ConnectionHandler<T> handler);
+
+    ConcurrentHashMap<String, String> getUserNamePassword();
 }
