@@ -7,15 +7,10 @@
 using boost::asio::ip::tcp;
 
 class ConnectionHandler {
-private:
-	const std::string host_;
-	const short port_;
-	boost::asio::io_service io_service_;   // Provides core I/O functionality
-	tcp::socket socket_;
-	bool loggedIn;
-
 public:
 	ConnectionHandler(std::string host, short port);
+
+	ConnectionHandler();
 
 	virtual ~ConnectionHandler();
 
@@ -52,4 +47,18 @@ public:
 	// check if user is logged in
 	bool isLoggedIn();
 
+	// set port
+	void setPort(short p);
+
+	// set host
+	void setHost(std::string h);
+
+	
+
+private:
+	const std::string host_;
+	const short port_;
+	boost::asio::io_service io_service_;   // Provides core I/O functionality
+	tcp::socket socket_;
+	bool loggedIn;
 }; //class ConnectionHandler
