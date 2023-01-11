@@ -5,6 +5,14 @@
 // TODO: implement the STOMP protocol
 class StompProtocol
 {
-private:
 public:
+    StompProtocol(ConnectionHandler &ch);
+    string processFrame(string msg);
+    string processKeyboard(string msg);
+
+private:
+    int disconnectRec;
+    int receiptCounter;
+    int subId;
+    ConnectionHandler* ch;
 };

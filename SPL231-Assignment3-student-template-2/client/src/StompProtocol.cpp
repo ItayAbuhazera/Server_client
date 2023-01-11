@@ -44,7 +44,7 @@ string StompProtocol::processKeyboard(string msg) {
 }
 
 
-string StompMessageProtocol::processFrame(string msg) {
+string StompProtocol::processFrame(string msg) {
     vector<string> tokens;
     std::istringstream stream(msg);
     std::string line;
@@ -63,18 +63,18 @@ string StompMessageProtocol::processFrame(string msg) {
     return  out;
 }
 
-void StompMessageProtocol::error(vector<string> tokens) {
+void StompProtocol::error(vector<string> tokens) {
     cout<<"Error"<<endl;
     cout<<tokens[tokens.size()-1]<<endl;
     ch->disconnecting();
 }
 
-string StompMessageProtocol::connected() {
+string StompProtocol::connected() {
     cout<<"login successful"<<endl;
     return "";
 }
 
-string StompMessageProtocol::login(vector<string> msg) {
+string StompProtocol::login(vector<string> msg) {
     if(!ch->isConnected()) {
         string host = msg[1].substr(0, msg[1].find(":"));
         ch->setHost(host);
@@ -99,7 +99,7 @@ string StompMessageProtocol::login(vector<string> msg) {
     }
 }
 
-void StompMessageProtocol::receipt(vector<string> tokens) {
+void StompProtocol::receipt(vector<string> tokens) {
     const string receiptId = tokens[1].substr(tokens[1].find(":")+1, tokens[1].length());
     int reccc=std::stoi(receiptId);
     if (reccc==disconnectRec){
@@ -114,7 +114,7 @@ void StompMessageProtocol::receipt(vector<string> tokens) {
     }
 }
 
-string StompMessageProtocol::logout(vector<string> msg) {
+string StompProtocol::logout(vector<string> msg) {
     string out = "DISCONNECT";
     out=out+"\n"+"receipt:"+to_string(receiptCounter)+"\n";
     disconnectRec = receiptCounter;
@@ -122,12 +122,12 @@ string StompMessageProtocol::logout(vector<string> msg) {
 
     return out;
 }
-string StompMessageProtocol::status(vector<string> msg) {
+string StompProtocol::status(vector<string> msg) {
     string out ="SEND";
     out=out+"\n"+"destination:"+msg[1]+"\n"+"\n"+"book status"+"\n";
     return out;
 }
-string StompMessageProtocol::addBook(vector<string> msg) {
+string StompProtocol::addBook(vector<string> msg) {
     int bookSize=msg.size()-2;
     string book="";
     for(int i=0;i<bookSize;i++)
@@ -138,7 +138,7 @@ string StompMessageProtocol::addBook(vector<string> msg) {
     ch->addAndRemoveInventory(book,msg[1],0);
     return out;
 }
-string StompMessageProtocol::borrow(vector<string> msg) {
+string StompProtocol::borrow(vector<string> msg) {
     int bookSize=msg.size()-2;
     string book="";
     for(int i=0;i<bookSize;i++)
@@ -149,7 +149,7 @@ string StompMessageProtocol::borrow(vector<string> msg) {
     ch->addAndRemoveToWish(book,0);
     return  out;
 }
-string StompMessageProtocol::returnBook(vector<string> msg) {
+string StompProtocol::returnBook(vector<string> msg) {
     int bookSize=msg.size()-2;
     string book="";
     for(int i=0;i<bookSize;i++)
@@ -161,7 +161,7 @@ string StompMessageProtocol::returnBook(vector<string> msg) {
     ch->addAndRemoveInventory(book,msg[1],1);
     return  out;
 }
-string StompMessageProtocol::join(vector<string> msg) {
+string StompProtocol::join(vector<string> msg) {
     string out = "SUBSCRIBE";
     subId++;
     ch->addToReceipts(receiptCounter,msg[1],true);
@@ -170,7 +170,7 @@ string StompMessageProtocol::join(vector<string> msg) {
     receiptCounter++;
     return out;
 }
-string StompMessageProtocol::exit(vector<string> msg) {
+string StompProtocol::exit(vector<string> msg) {
     string out = "";
     string topic = msg[1];
     if(ch->getSubId(topic)!=-1) {
@@ -184,7 +184,7 @@ string StompMessageProtocol::exit(vector<string> msg) {
     return out;
 }
 
-string StompMessageProtocol::message(vector<string> msg) {
+string StompProtocol::message(vector<string> msg) {
     vector<string> tokens;
     string out="";
     string topic = findHeader("destination", msg);
@@ -271,13 +271,13 @@ string StompMessageProtocol::message(vector<string> msg) {
     return out;
 }
 
-string StompMessageProtocol::sendFrame(string msg, string topic) {
+string StompProtocol::sendFrame(string msg, string topic) {
     string out="SEND";
     out=out+"\n"+"destination:"+topic+"\n"+"\n"+msg+"\n";
     return out;
 }
 
-string StompMessageProtocol::findHeader(string head,vector<string> msg) {
+string StompProtocol::findHeader(string head,vector<string> msg) {
     for (string s:msg){
         int ndx =s.find(":");
         if (s.substr(0,ndx)==head)
