@@ -10,14 +10,18 @@ using std::string;
 
 ConnectionHandler::ConnectionHandler(string host, short port) : host_(host), port_(port), io_service_(),
                                                                 socket_(io_service_), loggedIn(false) {}
+																
+ConnectionHandler::ConnectionHandler() : host_("0"), port_(0), io_service_(),
+										 socket_(io_service_), loggedIn(false) {}
 
 ConnectionHandler::~ConnectionHandler() {
 	close();
 }
 
+
+
 bool ConnectionHandler::connect() {
-	std::cout << "Starting connect to "
-	          << host_ << ":" << port_ << std::endl;
+	std::cout << "Connecting to " << host_ << ":" << port_ << std::endl;
 	try {
 		tcp::endpoint endpoint(boost::asio::ip::address::from_string(host_), port_); // the server endpoint
 		boost::system::error_code error;
@@ -25,7 +29,7 @@ bool ConnectionHandler::connect() {
 		if (error)
 			throw boost::system::system_error(error);
 		else{
-			loggedIn = true
+			loggedIn = true;
 		}
 	}
 	catch (std::exception &e) {
@@ -112,4 +116,20 @@ void ConnectionHandler::close() {
 
 bool ConnectionHandler::isLoggedIn(){
 	return loggedIn;
+}
+
+void ConnectionHandler::setHost(string h){
+	this->host_ = h;
+}
+
+void ConnectionHandler::setPort(short p){
+	this->port_ = p;
+}
+
+void ConnectionHandler::close(){
+	try {
+		socket_.close();
+	} catch (...) {
+		std::cout << "closing failed: connection already closed" << std::endl;
+	}
 }
