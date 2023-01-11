@@ -9,7 +9,7 @@ using std::endl;
 using std::string;
 
 ConnectionHandler::ConnectionHandler(string host, short port) : host_(host), port_(port), io_service_(),
-                                                                socket_(io_service_) {}
+                                                                socket_(io_service_), loggedIn(false) {}
 
 ConnectionHandler::~ConnectionHandler() {
 	close();
@@ -24,6 +24,9 @@ bool ConnectionHandler::connect() {
 		socket_.connect(endpoint, error);
 		if (error)
 			throw boost::system::system_error(error);
+		else{
+			loggedIn = true
+		}
 	}
 	catch (std::exception &e) {
 		std::cerr << "Connection failed (Error: " << e.what() << ')' << std::endl;
@@ -105,4 +108,8 @@ void ConnectionHandler::close() {
 	} catch (...) {
 		std::cout << "closing failed: connection already closed" << std::endl;
 	}
+}
+
+bool ConnectionHandler::isLoggedIn(){
+	return loggedIn;
 }

@@ -22,23 +22,56 @@ string StompProtocol::processKeyboard(string msg) {
 
     }
     string out = "";
-    if(tokens[0] == "login")
-        out = login(tokens);
-    if(ch -> isConnected()) {
-        if (tokens[0] == "join")
-            out = join(tokens);
-        if (tokens[0] == "borrow")
-            out = borrow(tokens);
-        if (tokens[0] == "add")
-            out = addBook(tokens);
-        if (tokens[0] == "exit")
-            out = exit(tokens);
-        if (tokens[0] == "logout")
-            out = logout(tokens);
-        if (tokens[0] == "return")
-            out = returnBook(tokens);
-        if (tokens[0] == "status")
-            out = status(tokens);
+ //   switch (tokens[0]) {
+	//	case "connect":
+	//		out = "CONNECT\naccept-version:1.2\nhost:stomp.cs.bgu.ac.il\nlogin:"+tokens[1]+"\npasscode:"+tokens[2]+"\n\n\0";
+	//		break;
+	//	case "subscribe":
+	//		out = "SUBSCRIBE\nid:"+to_string(subId)+"\ndestination:"+tokens[1]+"\n\n\0";
+	//		subId++;
+	//		break;
+	//	case "unsubscribe":
+	//		out = "UNSUBSCRIBE\nid:"+tokens[1]+"\n\n\0";
+	//		break;
+	//	case "send":
+	//		out = "SEND\ndestination:"+tokens[1]+"\n\n"+tokens[2]+"\n\0";
+	//	    break;
+	//	case "disconnect":
+	//		out = "DISCONNECT\nreceipt:"+to_string(receiptCounter)+"\n\n\0";
+	//		receiptCounter++;
+	//	    break;
+	//	default:
+	//		break;
+	//}
+    if(tokens[0] == "login"){
+        out = login(tokens)
+    }
+    else{
+        if(ch->isLoggedIn()){
+            switch (tokens[0]){
+                case "join":
+                out = join(tokens);
+                break;
+                case "add":
+                out = add(tokens);
+                break;
+                case "exit":
+                out = exit(tokens);
+                break;
+                case "logout":
+                out = logout(tokens);
+                break;
+                case "report"
+                out = report(tokens);
+                break;
+                case "summary"
+                out = summary(tokens);
+                break;
+                default:
+                out = error(tokens);
+                break;
+        }
+    }
     }
     return out;
 }
@@ -52,15 +85,24 @@ string StompProtocol::processFrame(string msg) {
         tokens.push_back(line);
     }
     string out = "";
-    if(tokens[0]=="MESSAGE")
-        out=message(tokens);
-    if(tokens[0]=="CONNECTED")
-        connected();
-    if(tokens[0]=="RECEIPT")
-        receipt(tokens);
-    if(tokens[0]=="ERROR")
-        error(tokens);
-    return  out;
+    switch(tokens[0]){
+        case "MESSAGE":
+        out = message(tokens);
+        break;
+        case "RECEIPT":
+        out = receipt(tokens);
+        break;
+        case "CONNECTED":
+        out = connected(tokens);
+        break;
+        case "ERROR":
+        out = error(tokens);
+        break;
+        default:
+        out = error(tokens);
+        break;
+    }
+    return out;
 }
 
 void StompProtocol::error(vector<string> tokens) {
@@ -119,7 +161,6 @@ string StompProtocol::logout(vector<string> msg) {
     out=out+"\n"+"receipt:"+to_string(receiptCounter)+"\n";
     disconnectRec = receiptCounter;
     receiptCounter++;
-
     return out;
 }
 string StompProtocol::status(vector<string> msg) {
@@ -202,40 +243,40 @@ string StompProtocol::message(vector<string> msg) {
         message=message.substr(message.find(" ")+1,message.length());
     }
 
-    if((tokens[0]!=hand->getName())&((tokens.size()>1)&&(tokens[1]=="wish"))){
+    if((tokens[0]!=ch->getName())&((tokens.size()>1)&&(tokens[1]=="wish"))){
             int bookSize=tokens.size()-4;
             string book="";
             for(int i=0;i<bookSize;i++)
                 book=book+" "+tokens[4+i];
             book=book.substr(1,book.length());
             if (ch->hasBook(book,topic)){
-                string message=hand->getName()+" has "+book;
+                string message=ch->getName()+" has "+book;
                 out=sendFrame(message,topic);
                  return out;
             }
         }
 
 
-    if((tokens[0]=="Returning")&((tokens[tokens.size()-1]==hand->getName()))) {
-        cout<< hand->getName() + " in returning action"<<endl;
+    if((tokens[0]=="Returning")&((tokens[tokens.size()-1]==ch->getName()))) {
+        cout<< ch->getName() + " in returning action"<<endl;
         int bookSize=tokens.size()-3;
         string book="";
         for(int i=0;i<bookSize;i++)
             book=book+" "+tokens[1+i];
         book=book.substr(1,book.length());
-        if(hand->isBorrowed(book)){
-            cout<<hand->getName() + " is in borrowed need to return to " + hand->getLender(book)<<endl;
+        if(ch->isBorrowed(book)){
+            cout<<ch->getName() + " is in borrowed need to return to " + ch->getLender(book)<<endl;
             string out = "SEND";
-            out=out+"\n"+"destination:"+topic+"\n"+"\n"+"Returning  "+book+ " to " +hand->getLender(book) + "\n";
-            hand->addAndRemoveBorrowed(book,"",1);
+            out=out+"\n"+"destination:"+topic+"\n"+"\n"+"Returning  "+book+ " to " +ch->getLender(book) + "\n";
+            ch->addAndRemoveBorrowed(book,"",1);
             return  out;
         }
-        hand->addAndRemoveInventory(book, topic, 0);
-        hand->addAndRemoveBorrowed(book, "", 1);
+        ch->addAndRemoveInventory(book, topic, 0);
+        ch->addAndRemoveBorrowed(book, "", 1);
     }
     if(tokens[0]=="book"){
-        string message=hand->getName()+": ";
-        vector <string> inv = hand->getBooks(topic);
+        string message=ch->getName()+": ";
+        vector <string> inv = ch->getBooks(topic);
         for(string book:inv) {
             message = message + book + ",";
         }
@@ -244,13 +285,13 @@ string StompProtocol::message(vector<string> msg) {
         return out;
     }
 
-    if(tokens[0]=="Taking"&&(tokens[tokens.size()-1]==hand->getName())){
+    if(tokens[0]=="Taking"&&(tokens[tokens.size()-1]==ch->getName())){
         int bookSize=tokens.size()-3;
         string book="";
         for(int i=0;i<bookSize;i++)
             book=book+" "+tokens[1+i];
         book=book.substr(1,book.length());
-        hand->addAndRemoveInventory(book,topic,1);
+        ch->addAndRemoveInventory(book,topic,1);
     }
     if(tokens.size()>1 &&(tokens[1]=="has")) {
         int bookSize=tokens.size()-2;
@@ -258,11 +299,11 @@ string StompProtocol::message(vector<string> msg) {
         for(int i=0;i<bookSize;i++)
             book=book+" "+tokens[2+i];
         book=book.substr(1,book.length());
-        if (hand->wished(book)) {
+        if (ch->wished(book)) {
             string message = "Taking " + book + " from " + tokens[0];
-            hand->addAndRemoveBorrowed(book, tokens[0], 0);
-            hand->addAndRemoveToWish(book,1);
-            hand->addAndRemoveInventory(book,topic,0);
+            ch->addAndRemoveBorrowed(book, tokens[0], 0);
+            ch->addAndRemoveToWish(book,1);
+            ch->addAndRemoveInventory(book,topic,0);
             out = sendFrame(message, topic);
             return out;
         }
