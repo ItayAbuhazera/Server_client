@@ -3,12 +3,14 @@
 #include <map>
 #include "../include/StompProtocol.h"
 #include "../include/ConnectionHandler.h"
+#include "../include/StompFrame.h"
+
 using namespace std;
 
-StompProtocol::StompProtocol(ConnectionHandler& ch): mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch), 
-                                        subscriptionsByTopic(unordered_map<string,int>()),
-                                        subscriptionsById(unordered_map<int,string>()),
-                                        receipts(unordered_map<int,pair<string,bool>>())
+StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch), 
+                                                        subscriptionsByTopic(unordered_map<string,int>()),
+                                                        subscriptionsById(unordered_map<int,string>()),
+                                                        receipts(unordered_map<int,pair<string,bool>>())
 {
     initCommands();
 }
@@ -29,20 +31,20 @@ void StompProtocol::initCommands(){
     commands["ERROR"] = -4;
 }
 
-string StompProtocol::processKeyboard(string msg) {
+vector<string> StompProtocol::tokenize(string source, char delimiter){
     vector<string> tokens;
-    while(msg != ""){
-        string nextToken;
-        if(msg.find(" ") == std::string::npos) {
-            nextToken = msg;
-            tokens.push_back(nextToken);
-            break;
-        }
+    string token;
+    stringstream stream(source);
 
-        nextToken = msg.substr(0, msg.find(" "));
-        tokens.push_back(nextToken);
-        msg = msg.substr(msg.find(" ") + 1 , msg.length());
+    while(getline(stream, token, delimiter)){
+        tokens.push_back(token);
     }
+    
+    return tokens;
+}
+
+string StompProtocol::processKeyboard(string msg) {
+    vector<string> tokens = tokenize(msg, ' ');
     string out = "";
     switch (commands[tokens[0]]) {
 
@@ -72,7 +74,7 @@ string StompProtocol::processKeyboard(string msg) {
 
         //Send
 		case 5:
-			out = "SEND\ndestination:" + tokens[1] + "\n\n"+tokens[2] + "\n\0";
+			out = "SEND\ndestination:" + tokens[1] + "\n\n" + tokens[2] + "\n\0";
 		    break;
 
         //Disconnect
@@ -90,37 +92,19 @@ string StompProtocol::processKeyboard(string msg) {
 }
 
 string StompProtocol::processFrame(string msg) {
-    string command;
-    map<string, string> headers;
-    string body;
-
-    //Command
-    int idx = msg.find("\n");
-    command = msg.substr(0, idx);
-    msg = msg.erase(0, idx);
-
-    //Headers
-    while(msg.substr(0, 2) != "\n\n"){
-        idx = msg.find("\n");
-        string line = msg.substr(0, idx);
-        headers[line.substr(0, line.find(":"))] = line.substr(line.find(":") + 1);
-        msg = msg.erase(0, idx);
-    }
-
-    //Body
-    body = msg.substr(0, msg.length() - 1);
+    StompFrame newFrame(msg);
 
     string out = "";
-    switch(commands[command]){
+    switch(commands[newFrame.getCommand()]){
 
         //Message
         case -1:
-        out = message(body);
+        out = message(newFrame.getBody());
         break;
 
         //Receipt
         case -2:
-        receipt(tokens);
+        receipt(newFrame);
         break;
 
         //Connected
@@ -130,20 +114,19 @@ string StompProtocol::processFrame(string msg) {
 
         //Error
         case -4:
-        error(tokens);
+        error(newFrame);
         break;
 
         //Defualt - Invalid (Error)
         default:
-        error(tokens);
+        error(newFrame);
         break;
     }
     return out;
 }
 
-void StompProtocol::error(vector<string> tokens) {
-    cout<<"Error"<<endl;
-    cout<<tokens[tokens.size()-1]<<endl;
+void StompProtocol::error(StompFrame frame) {
+    frame.printFrame(false);
     mConnectionHandler -> disconnecting();
 }
 
@@ -172,19 +155,8 @@ string StompProtocol::login(vector<string> msg) {
     }
 }
 
-void StompProtocol::receipt(vector<string> tokens) {
-    const string receiptId = tokens[1].substr(tokens[1].find(":")+1, tokens[1].length());
-    int reccc=std::stoi(receiptId);
-    if (reccc==mDisconnectRec){
-        mConnectionHandler -> disconnecting();
-        return;
-    }
-    if(getReceipts().count(reccc) != 0){
-        if(getReceipts().at(reccc).second)
-            cout<<"Joined club "+ getReceipts().at(reccc).first<<endl;
-        else
-            cout<<"Exited club "+getReceipts().at(reccc).first<<endl;
-    }
+void StompProtocol::receipt(StompFrame frame) {
+    cout << "Receipt recieved with id: " << frame.getHeaderValue("receipt-id") << endl;
 }
 
 string StompProtocol::logout(vector<string> msg) {

@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include "../include/ConnectionHandler.h"
+#include "../include/StompFrame.h"
 
 // TODO: implement the STOMP protocol
 class StompProtocol
@@ -15,10 +16,11 @@ public:
 
 private:
     void initCommands();
+    vector<string> tokenize(string source, char delimiter);
     string logout(vector<string> msg);
     string message(string msg);
-    void receipt(vector<string> msg);
-    void error(vector<string> msg);
+    void receipt(StompFrame frame);
+    void error(StompFrame frame);
     string login(vector<string> msg);
     string join(vector<string> msg);
     string report(vector<string> msg);
@@ -30,6 +32,7 @@ private:
     int getSubId(string topic);
     void addToReceipts (int recId, string topic, bool action);
     unordered_map<int,pair<string,bool >> getReceipts ();
+
     int mDisconnectRec;
     int mReceiptCounter;
     int mSubId;
