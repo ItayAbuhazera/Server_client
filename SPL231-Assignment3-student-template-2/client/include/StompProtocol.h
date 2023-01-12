@@ -42,4 +42,5 @@ private:
     unordered_map <int, string> subscriptionsById;
     unordered_map <int,pair<string, bool>> receipts;
 
+    void disconnect();
 };

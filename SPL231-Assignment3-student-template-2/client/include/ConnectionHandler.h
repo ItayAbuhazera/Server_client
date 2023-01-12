@@ -45,7 +45,7 @@ public:
 	void close();
 
 	// check if user is logged in
-	bool isLoggedIn();
+	bool isLoggedIn() const;
 
 	// set port
 	void setPort(short p);
@@ -53,12 +53,17 @@ public:
 	// set host
 	void setHost(std::string h);
 
-	
+
+    void setLoggedIn(bool b);
+
+    void setName(std::basic_string<char> &basicString);
 
 private:
-	const std::string host_;
-	const short port_;
+	std::string host_;
+	short port_;
 	boost::asio::io_service io_service_;   // Provides core I/O functionality
 	tcp::socket socket_;
 	bool loggedIn;
+    std::string name;
+
 }; //class ConnectionHandler

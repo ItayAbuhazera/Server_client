@@ -42,3 +42,4 @@ void StompFrame::printFrame(bool includeHeaders) const {
             std::cout << "{" << pair.first << ": " << pair.second << "}\n";
     std::cout << mBody << std::endl;
 }
+

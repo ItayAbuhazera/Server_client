@@ -2,8 +2,9 @@
   "ExpandedNodes": [
     "",
     "\\client",
+    "\\client\\include",
     "\\client\\src"
   ],
-  "SelectedNode": "\\client\\src\\ConnectionHandler.cpp",
+  "SelectedNode": "\\client\\include\\ConnectionHandler.h",
   "PreviewInSolutionExplorer": false
 }

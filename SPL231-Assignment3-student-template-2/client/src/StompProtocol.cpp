@@ -7,7 +7,7 @@
 
 using namespace std;
 
-StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch), 
+StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch),
                                                         subscriptionsByTopic(unordered_map<string,int>()),
                                                         subscriptionsById(unordered_map<int,string>()),
                                                         receipts(unordered_map<int,pair<string,bool>>())
@@ -39,56 +39,56 @@ vector<string> StompProtocol::tokenize(string source, char delimiter){
     while(getline(stream, token, delimiter)){
         tokens.push_back(token);
     }
-    
+
     return tokens;
 }
 
 string StompProtocol::processKeyboard(string msg) {
     vector<string> tokens = tokenize(msg, ' ');
-    string out = "";
+    string out;
     switch (commands[tokens[0]]) {
 
         //Login
         case 0:
-        for(string token : tokens){
-            out += token + " ";
-        }
-        out.pop_back(); //remove last whitespace
-        break;
+            for (const string &token: tokens) {
+                out += token + " ";
+            }
+            out.pop_back(); //remove last whitespace
+            break;
 
-        //Connecet
-		case 1:
-			out = "CONNECT\naccept-version:1.2\nhost:stomp.cs.bgu.ac.il\nlogin:" + tokens[1] + "\npasscode:" + tokens[2] + "\n\n\0";
-			break;
+            //Connecet
+        case 1:
+            out = "CONNECT\naccept-version:1.2\nhost:stomp.cs.bgu.ac.il\nlogin:" + tokens[1] + "\npasscode:" +
+                  tokens[2] + "\n\n\0";
+            break;
 
-        //Subscribe
-		case 2:
-			out = "SUBSCRIBE\nid:" + to_string(mSubId) + "\ndestination:" + tokens[1] + "\n\n\0";
-			mSubId++;
-			break;
+            //Subscribe
+        case 2:
+            out = "SUBSCRIBE\nid:" + to_string(mSubId) + "\ndestination:" + tokens[1] + "\n\n\0";
+            mSubId++;
+            break;
 
-        //Unsubscribe
-		case 3:
-			out = "UNSUBSCRIBE\nid:" + tokens[1] + "\n\n\0";
-			break;
+            //Unsubscribe
+        case 3:
+            out = "UNSUBSCRIBE\nid:" + tokens[1] + "\n\n\0";
+            break;
 
-        //Send
-		case 5:
-			out = "SEND\ndestination:" + tokens[1] + "\n\n" + tokens[2] + "\n\0";
-		    break;
+            //Send
+        case 5:
+            out = "SEND\ndestination:" + tokens[1] + "\n\n" + tokens[2] + "\n\0";
+            break;
 
-        //Disconnect
-		case 4:
-			out = "DISCONNECT\nreceipt:" + to_string(mReceiptCounter) + "\n\n\0";
-			mReceiptCounter++;
-		    break;
+            //Disconnect
+        case 4:
+            out = "DISCONNECT\nreceipt:" + to_string(mReceiptCounter) + "\n\n\0";
+            mReceiptCounter++;
+            break;
 
-        //Defualt - Invalid
-		default:
-			break;
-
-        return out;
-	}
+            //Defualt - Invalid
+        default:
+            break;
+    }
+    return out;
 }
 
 string StompProtocol::processFrame(string msg) {
@@ -127,7 +127,7 @@ string StompProtocol::processFrame(string msg) {
 
 void StompProtocol::error(StompFrame frame) {
     frame.printFrame(false);
-    mConnectionHandler -> disconnecting();
+    disconnect();
 }
 
 string StompProtocol::login(vector<string> msg) {
@@ -140,7 +140,6 @@ string StompProtocol::login(vector<string> msg) {
             std::cerr << "Unable to connect " << host << ":" << port << std::endl;
             return "";
         }
-        mConnectionHandler -> connecting();
         mConnectionHandler -> setName(msg[2]);
         string out = "CONNECT";
         out = out + "\n" + "accept-version:1.2" + "\n" + "host:stomp.cs.bgu.ac.il" + "\n" + "login:" + msg[2] + "\n" +
@@ -364,3 +363,14 @@ unordered_map<int,pair<string,bool>> StompProtocol::getReceipts() {
       subscriptionsByTopic.erase(topic);
       subscriptionsById.erase(id);
   }
+
+  void StompProtocol::disconnect(){
+    this->subscriptionsById.clear();
+    this->subscriptionsByTopic.clear();
+    this->receipts.clear();
+    mConnectionHandler->setLoggedIn(false);
+    mConnectionHandler->close();
+
+
+
+}

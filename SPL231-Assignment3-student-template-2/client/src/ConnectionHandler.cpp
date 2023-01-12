@@ -9,10 +9,10 @@ using std::endl;
 using std::string;
 
 ConnectionHandler::ConnectionHandler(string host, short port) : host_(host), port_(port), io_service_(),
-                                                                socket_(io_service_), loggedIn(false) {}
+                                                                socket_(io_service_), loggedIn(false), name("") {}
 																
 ConnectionHandler::ConnectionHandler() : host_("0"), port_(0), io_service_(),
-										 socket_(io_service_), loggedIn(false) {}
+										 socket_(io_service_), loggedIn(false), name(""){}
 
 ConnectionHandler::~ConnectionHandler() {
 	close();
@@ -114,22 +114,23 @@ void ConnectionHandler::close() {
 	}
 }
 
-bool ConnectionHandler::isLoggedIn(){
+bool ConnectionHandler::isLoggedIn() const{
 	return loggedIn;
 }
 
 void ConnectionHandler::setHost(string h){
-	this->host_ = h;
+	this->host_ = std::move(h);
 }
 
 void ConnectionHandler::setPort(short p){
 	this->port_ = p;
 }
 
-void ConnectionHandler::close(){
-	try {
-		socket_.close();
-	} catch (...) {
-		std::cout << "closing failed: connection already closed" << std::endl;
-	}
+void ConnectionHandler::setLoggedIn(bool b){
+    this->loggedIn = b;
+}
+
+void ConnectionHandler::setName(std::basic_string<char> &basicString) {
+    name=basicString;
+
 }
