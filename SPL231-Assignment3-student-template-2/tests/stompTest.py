@@ -4,7 +4,7 @@ import argparse
 
 
 def connect_and_subscribe(conn, name, password, topic):
-    conn.connect(name, password, wait=True)
+    conn.connect(name, password, wait=True, with_connect_command=True)
     conn.subscribe(destination=topic, id=1)
 
 

@@ -7,14 +7,14 @@ import java.util.Hashtable;
 
 public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     private int connectionId;
-    private Connections<StompFrame> connections;
+    private ConnectionsImpl<StompFrame> connections;
     private static final Hashtable<String, Integer> commandToInt = new Hashtable<>();
     private boolean shouldTerminate;
     private int msgId;
 
     public StompProtocol(){
         connectionId = -1;
-        connections = null;
+        connections = new ConnectionsImpl<>();
         shouldTerminate = false;
         msgId = -1;
         commandToInt.put("CONNECT", 1);
@@ -26,8 +26,8 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
 
     @Override
     public void start(int connectionId, Connections<StompFrame> connections) {
-        this.connectionId = connectionId;
-        this.connections = connections;
+//        this.connectionId = connectionId;
+//        this.connections = connections;
     }
 
     private int assignMsgId(){
@@ -75,18 +75,19 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     private void connect(StompFrame frame){
         if (frame.getHeaders().containsKey("accept-version")) {
             if (frame.getHeaders().get("accept-version").equals("1.2")) {
-                if (frame.getHeaders().containsKey("login") && frame.getHeaders().containsKey("passcode")) {
-                    if (connections.getUserNamePassword().get(frame.getHeaders().get("login")).equals(frame.getHeaders().get("passcode"))) {
-                        Hashtable<String, String> sendHeaders = new Hashtable<>();
-                        sendHeaders.put("version", frame.getHeaderValue("version"));
-                        connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
+                    if(connections.getUserNamePassword().containsKey(frame.getHeaderValue("login"))) {
+                        if (connections.getUserNamePassword().get(frame.getHeaders().get("login")).equals(frame.getHeaders().get("passcode"))) {
+                            Hashtable<String, String> sendHeaders = new Hashtable<>();
+                            sendHeaders.put("version", frame.getHeaderValue("version"));
+                            connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
 
-                    } else {
-                        error(connectionId, "Invalid login or password", "", frame);
+                        } else {
+                            error(connectionId, "Invalid login or password", "", frame);
+                        }
                     }
-                } else {
-                    error(connectionId, "Missing login or password", "", frame);
-                }
+                        else{
+                            connections.register(frame.getHeaderValue("login"), frame.getHeaderValue("passcode"));
+                        }
             } else {
                 error(connectionId, "Invalid version", "", frame);
             }
@@ -164,6 +165,8 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         receiptHeaders.put("receipt-id", sourceFrame.getHeaderValue("receipt-id"));
         connections.send(connectionId, new StompFrame("RECEIPT", receiptHeaders, ""));
     }
+
+
 
     @Override
     public boolean shouldTerminate() {

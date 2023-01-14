@@ -20,12 +20,14 @@ public class StompServer extends BaseServer {
     private final Supplier<MessageEncoderDecoder<StompFrame>> encdecFactory;
     private ServerSocket sock;
     private Map<Integer, Integer> connections;
+    private ConnectionsImpl connectionsImpl;
     public StompServer(int port, Supplier<MessagingProtocol<StompFrame>> protocolFactory, Supplier<MessageEncoderDecoder<StompFrame>> encdecFactory) {
         super(port, protocolFactory, encdecFactory);
         this.port = port;
         this.protocolFactory = protocolFactory;
         this.encdecFactory = encdecFactory;
         this.sock = null;
+        this.connectionsImpl = new ConnectionsImpl();
     }
 //    public StompServer(int port, Supplier<MessagingProtocol<T>>  protocolFactory, Supplier<MessageEncoderDecoder<T>> encdecFactory) {
 //        this(port, protocolFactory, encdecFactory);

@@ -22,6 +22,13 @@ public class ConnectionsImpl<T> implements Connections<T> {
         this.subscribedChannels = new ConcurrentHashMap<>();
         this.nextId = 0;
     }
+    public ConnectionsImpl() {
+        this.connections = new ConcurrentHashMap<>();
+        this.channels = new ConcurrentHashMap<>();
+        this.subscribedChannels = new ConcurrentHashMap<>();
+        this.userNamePassword = new ConcurrentHashMap<>();
+        this.nextId = 0;
+    }
 
     public void connect(ConnectionHandler<T> handler) {
         connections.put(nextId, handler);
@@ -95,6 +102,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 unsubscribe(connectionId, channel);
             }
         }
+    }
+
+    public void register(String login, String passcode) {
+        userNamePassword.put(login, passcode);
     }
 }
 
