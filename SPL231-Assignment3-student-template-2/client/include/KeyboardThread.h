@@ -12,7 +12,10 @@ public:
     KeyboardThread & operator=(const KeyboardThread &kt);
     ~KeyboardThread();
 
+    void terminate();
+
 private:
     ConnectionHandler* mConnectionHandler;
     StompProtocol* mProtocol;
+    bool shouldTerminate;
 };

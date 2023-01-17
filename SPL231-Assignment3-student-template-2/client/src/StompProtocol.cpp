@@ -7,7 +7,7 @@
 
 using namespace std;
 
-StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch),
+StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch),
                                                         subscriptionsByTopic(unordered_map<string,int>()),
                                                         subscriptionsById(unordered_map<int,string>()),
                                                         receipts(unordered_map<int,pair<string,bool>>()),
@@ -16,7 +16,7 @@ StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(0), mRece
     initCommands();
 }
 
-StompProtocol::StompProtocol(const StompProtocol& protocol): mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(),
+StompProtocol::StompProtocol(const StompProtocol& protocol): mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(),
                                                         subscriptionsByTopic(unordered_map<string,int>()),
                                                         subscriptionsById(unordered_map<int,string>()),
                                                         receipts(unordered_map<int,pair<string,bool>>()),
@@ -35,10 +35,10 @@ void StompProtocol::initCommands(){
     //Client
     commands["login"] = 0;
     //commands["connect"] = 1;
-    commands["subscribe"] = 2;
-    commands["unsubscribe"] = 3;
+    commands["join"] = 2;
+    commands["exit"] = 3;
     commands["send"] = 5;
-    commands["disconnect"] = 4;
+    commands["logout"] = 4;
 
     //Server
     commands["MESSAGE"] = -1;
@@ -61,6 +61,11 @@ vector<string> StompProtocol::tokenize(string source, char delimiter){
 
 string StompProtocol::processKeyboard(string msg) {
     vector<string> tokens = tokenize(msg, ' ');
+    if(!mConnectionHandler->isLoggedIn() && tokens[0] != "login"){
+        std::cout << "login first" << std::endl;
+        return "";
+    }
+
     string out;
     switch (commands[tokens[0]]) {
         //Login
@@ -74,23 +79,23 @@ string StompProtocol::processKeyboard(string msg) {
             mSubId++;
             break;
 
-            //Unsubscribe
+        //Unsubscribe
         case 3:
             out = "UNSUBSCRIBE\nid:" + tokens[1] + "\n\n\0";
             break;
 
-            //Send
+        //Send
         case 5:
             out = "SEND\ndestination:" + tokens[1] + "\n\n" + tokens[2] + "\n\0";
             break;
 
-            //Disconnect
+        //Disconnect
         case 4:
             out = "DISCONNECT\nreceipt:" + to_string(mReceiptCounter) + "\n\n\0";
             mReceiptCounter++;
             break;
 
-            //Defualt - Invalid
+        //Defualt - Invalid
         default:
             std::cout << "Invalid frame code" << std::endl;
             break;
@@ -99,39 +104,39 @@ string StompProtocol::processKeyboard(string msg) {
     return out;
 }
 
-string StompProtocol::processFrame(string msg) {
-    StompFrame newFrame(msg);
-    //newFrame.printFrame(1);
-    string out = "";
+bool StompProtocol::processFrame(StompFrame newFrame) {
+    int recId;
     switch(commands[newFrame.getCommand()]){
 
         //Message
         case -1:
-        out = message(newFrame.getBody());
+        newFrame.printFrame(1);
         break;
 
         //Receipt
         case -2:
-        receipt(newFrame);
+        newFrame.printFrame(1);
+        recId = std::stoi(newFrame.getHeaderValue("receipt-id"));
+        if(recId == mDisconnectRec){
+            mConnectionHandler->setLoggedIn(false);
+            mConnectionHandler->close();
+        }
+        std::cout << "DC" << std::endl;
+        return true;
         break;
 
         //Connected
         case -3:
-        std::cout << "Connected" << std::endl;
         newFrame.printFrame(1);
         break;
 
         //Error
-        case -4:
-        error(newFrame);
+        default:
+        newFrame.printFrame(1);
         break;
 
-        //Defualt - Invalid (Error)
-        default:
-        error(newFrame);
-        break;
     }
-    return out;
+    return false;
 }
 
 void StompProtocol::error(StompFrame frame) {
@@ -156,7 +161,7 @@ string StompProtocol::login(vector<string> msg) {
             return out;
         }
     }
-    std::cout << "Already logged in" << std::endl;
+    std::cout << "The client is already logged in, log out before trying again" << std::endl;
     return "";
 }
 

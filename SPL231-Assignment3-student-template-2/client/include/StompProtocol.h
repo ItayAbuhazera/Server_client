@@ -13,7 +13,8 @@ public:
     StompProtocol(ConnectionHandler& ch);
     StompProtocol(const StompProtocol& protocol);
     const StompProtocol& operator=(const StompProtocol& protocol);
-    string processFrame(string msg);
+    //string processFrame(string msg);
+    bool processFrame(StompFrame newFrame);
     string processKeyboard(string msg);
 
 private:

@@ -58,6 +58,7 @@ public:
 
     void setName(std::basic_string<char> &basicString);
 
+
 private:
 	std::string host_;
 	short port_;

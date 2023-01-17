@@ -12,25 +12,22 @@ int main(int argc, char *argv[]) {
     StompProtocol* stompProtocol  = new StompProtocol(*ch);
     KeyboardThread  kbThread(*ch, *stompProtocol);
     std::thread thread(&KeyboardThread::run, &kbThread);
-    while(1){
-        if(ch -> isLoggedIn()) {
-            std::string ans = "";
-            if (!ch -> getFrameAscii(ans, '\0')) {
-                std::cout << "Disconnected. Exiting...\n" << std::endl;
-                break;
+    bool shouldTerminate = false;
+    
+    while(!shouldTerminate){
+        //Receive
+        if(ch->isLoggedIn()){
+            std::string msg = "";
+            if(ch->getFrameAscii(msg, '\0')){
+                StompFrame recFrame(msg);
+                shouldTerminate = stompProtocol->processFrame(recFrame);
+                msg.clear();
+            } else {
+                shouldTerminate = true;
             }
-            std::string out = "";
-            if(ans.back() == '\0'){
-                StompFrame readFrame(ans);
-                out = stompProtocol -> processFrame(ans);
-            }
-            if (out != "")
-                if (!ch -> sendFrameAscii(out, '\0')) {
-                    std::cout << "Disconnected. Exiting...\n" << std::endl;
-                    break;
-                }
         }
     }
+    kbThread.terminate();
     thread.join();
     delete(ch);
     delete(stompProtocol);
