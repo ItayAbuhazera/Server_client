@@ -4,30 +4,37 @@
 #include <thread>
 #include <string>
 
-#include <iostream>;
+#include <iostream>
 
 int main(int argc, char *argv[]) {
+    std::cout << "Client Starting" << endl;
 	ConnectionHandler* ch = new ConnectionHandler();
-
     StompProtocol* stompProtocol  = new StompProtocol(*ch);
     KeyboardThread  kbThread(*ch, *stompProtocol);
     std::thread thread(&KeyboardThread::run, &kbThread);
+    bool shouldTerminate = false;
+    
     while(1){
-        if(ch -> isLoggedIn()) {
-            std::string ans;
-            if (!ch -> getFrameAscii(ans, '\0')) {
-                std::cout << "Disconnected. Exiting...\n" << std::endl;
-                break;
+        //Receive
+        if(ch->isLoggedIn()){
+            std::string msg = "";
+            if(ch->getFrameAscii(msg, '\0')){
+                StompFrame recFrame(msg);
+                shouldTerminate = stompProtocol->processFrame(recFrame);
+                if(shouldTerminate)
+                    kbThread.terminate();
+                msg.clear();
+            } else {
+                shouldTerminate = true;
+                kbThread.terminate();
             }
-            std::string out = stompProtocol -> processFrame(ans);
-            if (out != "")
-                if (!ch -> sendFrameAscii(out, '\0')) {
-                    std::cout << "Disconnected. Exiting...\n" << std::endl;
-                    break;
-                }
         }
     }
+    ch->setLoggedIn(false);
+    kbThread.terminate();
     thread.join();
+    ch->close();
+    std::cout << "Disconnected" << std::endl;
     delete(ch);
     delete(stompProtocol);
 	return 0;
