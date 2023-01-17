@@ -145,7 +145,8 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
 
     private void unsubscribe(int connectionId, StompFrame frame){
         if (frame.getHeaders().containsKey("id")) {
-            connections.unsubscribe(connectionId, Integer.parseInt(frame.getHeaderValue("id")));
+            if(!connections.unsubscribe(connectionId, Integer.parseInt(frame.getHeaderValue("id"))))
+                error(connectionId, "Invalid subscription id", "", frame);
             if(frame.getHeaders().containsKey("receipt-id"))
                 receipt(connectionId, frame);
         } else {

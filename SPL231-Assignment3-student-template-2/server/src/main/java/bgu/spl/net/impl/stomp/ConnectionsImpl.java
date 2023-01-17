@@ -47,13 +47,14 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     @Override
-    public synchronized void unsubscribe(int connectionId, int subId){
+    public synchronized boolean unsubscribe(int connectionId, int subId){
         ConcurrentHashMap<Integer, String> subs = subscriptionsIds.get(connectionId);
         if(subs == null)
-            return;
+            return false;
         String unsub = subs.remove(subId);
         subscriptionsIds.put(connectionId, subs);
         System.out.println(connectionId + " unsub from " + subId + " which was " +unsub);
+        return true;
     }
 
     @Override

@@ -13,7 +13,7 @@ public interface Connections<T> {
 
     void subscribe(int connectionId, int subId, String channel);
 
-    void unsubscribe(int connectionId, int subId);
+    boolean unsubscribe(int connectionId, int subId);
 
     void unsubscribeAll(int connectionId);
 
