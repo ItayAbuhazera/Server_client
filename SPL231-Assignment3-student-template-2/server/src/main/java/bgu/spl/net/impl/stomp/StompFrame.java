@@ -17,13 +17,14 @@ public class StompFrame {
         this.body = body;
     }
     public String toString() {
-        StringBuilder header = new StringBuilder();
-        for (Map.Entry<String, String> entry : headers.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            header.append(key).append(":").append(value).append("\n");
+        StringBuilder sb = new StringBuilder();
+        for (String key : headers.keySet()) {
+            String value = headers.get(key);
+            sb.append(key + ":" + value);
+            sb.append("\n");
         }
-        return command + "\n" + header + "\n" + body + "\n" + "\u0000";
+
+        return command + "\n" + sb.toString() + "\n" + body + "\n" + "\u0000";
     }
     public Hashtable<String, String> getHeaders() {
         return headers;

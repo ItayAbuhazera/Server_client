@@ -22,29 +22,36 @@ public class StompEncDec implements MessageEncoderDecoder<StompFrame> {
     }
 
     private StompFrame stringToFrame(String message){
-        String[] messageParts = message.split("\n");
-        String command = messageParts[0];
-        Hashtable<String,String> headers = new Hashtable<>();
-        for (int i = 1; i < messageParts.length; i++) {
-            if(messageParts[i].equals("\n")){
-                break;
-            }
-            String[] header = messageParts[i].split(":");
-            headers.put(header[0],header[1]);
+        String body, command;
+        Hashtable<String, String> headers = new Hashtable<>();
+
+        //command
+        int commandIndex = message.indexOf('\n');
+        command = message.substring(0, commandIndex);
+        message = message.substring(commandIndex + 1);
+
+        //headers
+        int nextIndex = message.indexOf(':');
+        while(nextIndex > -1){
+            String key = message.substring(0, nextIndex);
+            String val = message.substring(nextIndex + 1, message.indexOf('\n'));
+            headers.put(key, val);
+            message = message.substring(message.indexOf('\n') + 1);
+            nextIndex = message.indexOf(':');
         }
-        StringBuilder body = new StringBuilder();
-        for (int i = messageParts.length-2; i >= 0; i--) {
-            if(messageParts[i].equals("\n")){
-                break;
-            }
-            body.insert(0, messageParts[i]);
-        }
-        return new StompFrame(command, headers, body.toString());
+
+        //body
+        if(message.length() <= 2)
+            body = "<BODY>";
+        else
+            body = message.substring(2);
+
+        return new StompFrame(command, headers, body);
     }
 
     @Override
     public byte[] encode(StompFrame message) {
-        return (message + "\n").getBytes(); //uses utf8 by default
+        return (message.toString()).getBytes(); //uses utf8 by default
     }
 
     private void pushByte(byte nextByte) {
