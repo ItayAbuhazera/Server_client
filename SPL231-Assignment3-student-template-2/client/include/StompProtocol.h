@@ -10,7 +10,9 @@
 class StompProtocol
 {
 public:
-    StompProtocol(ConnectionHandler &ch);
+    StompProtocol(ConnectionHandler& ch);
+    StompProtocol(const StompProtocol& protocol);
+    const StompProtocol& operator=(const StompProtocol& protocol);
     string processFrame(string msg);
     string processKeyboard(string msg);
 
@@ -37,10 +39,10 @@ private:
     int mReceiptCounter;
     int mSubId;
     ConnectionHandler* mConnectionHandler;
-    map<string, int> commands;
     unordered_map <string, int> subscriptionsByTopic; 
     unordered_map <int, string> subscriptionsById;
     unordered_map <int,pair<string, bool>> receipts;
+    map<string, int> commands;
 
     void disconnect();
 };

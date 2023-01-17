@@ -10,15 +10,31 @@ using namespace std;
 StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch),
                                                         subscriptionsByTopic(unordered_map<string,int>()),
                                                         subscriptionsById(unordered_map<int,string>()),
-                                                        receipts(unordered_map<int,pair<string,bool>>())
+                                                        receipts(unordered_map<int,pair<string,bool>>()),
+                                                        commands()
 {
     initCommands();
+}
+
+StompProtocol::StompProtocol(const StompProtocol& protocol): mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(),
+                                                        subscriptionsByTopic(unordered_map<string,int>()),
+                                                        subscriptionsById(unordered_map<int,string>()),
+                                                        receipts(unordered_map<int,pair<string,bool>>()),
+                                                        commands()
+{
+    initCommands();
+}
+
+const StompProtocol& StompProtocol::operator=(const StompProtocol& protocol)
+{
+    initCommands();
+    return *(this);
 }
 
 void StompProtocol::initCommands(){
     //Client
     commands["login"] = 0;
-    commands["connect"] = 1;
+    //commands["connect"] = 1;
     commands["subscribe"] = 2;
     commands["unsubscribe"] = 3;
     commands["send"] = 5;
@@ -47,22 +63,12 @@ string StompProtocol::processKeyboard(string msg) {
     vector<string> tokens = tokenize(msg, ' ');
     string out;
     switch (commands[tokens[0]]) {
-
         //Login
         case 0:
-            for (const string &token: tokens) {
-                out += token + " ";
-            }
-            out.pop_back(); //remove last whitespace
+            out = login(tokens);
             break;
 
-            //Connecet
-        case 1:
-            out = "CONNECT\naccept-version:1.2\nhost:stomp.cs.bgu.ac.il\nlogin:" + tokens[1] + "\npasscode:" +
-                  tokens[2] + "\n\n\0";
-            break;
-
-            //Subscribe
+        //Subscribe
         case 2:
             out = "SUBSCRIBE\nid:" + to_string(mSubId) + "\ndestination:" + tokens[1] + "\n\n\0";
             mSubId++;
@@ -86,14 +92,16 @@ string StompProtocol::processKeyboard(string msg) {
 
             //Defualt - Invalid
         default:
+            std::cout << "Invalid frame code" << std::endl;
             break;
     }
+    std::cout << std::endl << out << std::endl;
     return out;
 }
 
 string StompProtocol::processFrame(string msg) {
     StompFrame newFrame(msg);
-
+    //newFrame.printFrame(1);
     string out = "";
     switch(commands[newFrame.getCommand()]){
 
@@ -110,6 +118,7 @@ string StompProtocol::processFrame(string msg) {
         //Connected
         case -3:
         std::cout << "Connected" << std::endl;
+        newFrame.printFrame(1);
         break;
 
         //Error
@@ -126,7 +135,7 @@ string StompProtocol::processFrame(string msg) {
 }
 
 void StompProtocol::error(StompFrame frame) {
-    frame.printFrame(false);
+    frame.printFrame(0);
     disconnect();
 }
 
@@ -139,19 +148,16 @@ string StompProtocol::login(vector<string> msg) {
         if (!mConnectionHandler -> connect()) {
             std::cerr << "Unable to connect " << host << ":" << port << std::endl;
             return "";
+        } else {
+            mConnectionHandler -> setName(msg[2]);
+            string out = "CONNECT";
+            out = out + "\n" + "accept-version:1.2" + "\n" + "host:stomp.cs.bgu.ac.il" + "\n" + "login:" + msg[2] + "\n" +
+                "passcode:" + msg[3] + "\n" + "\n";
+            return out;
         }
-        mConnectionHandler -> setName(msg[2]);
-        string out = "CONNECT";
-        out = out + "\n" + "accept-version:1.2" + "\n" + "host:stomp.cs.bgu.ac.il" + "\n" + "login:" + msg[2] + "\n" +
-              "passcode:" + msg[3] + "\n" + "\n";
-        return out;
     }
-    else {
-        string out = "CONNECT";
-        out = out + "\n" + "accept-version:1.2" + "\n" + "host:stomp.cs.bgu.ac.il" + "\n" + "login:" + msg[2] + "\n" +
-              "passcode:" + msg[3] + "\n" + "\n";
-        return out;
-    }
+    std::cout << "Already logged in" << std::endl;
+    return "";
 }
 
 void StompProtocol::receipt(StompFrame frame) {
@@ -171,43 +177,6 @@ string StompProtocol::report(vector<string> msg) {
     out = out+"\n"+"destination:" + msg[1] + "\n" + "\n" + "book status" + "\n";
     return out;
 }
-
-/* string StompProtocol::addBook(vector<string> msg) {
-    int bookSize=msg.size()-2;
-    string book="";
-    for(int i=0;i<bookSize;i++)
-        book=book+" "+msg[2+i];
-    book=book.substr(1,book.length());
-    string out = "SEND";
-    out=out+"\n"+"destination:"+msg[1]+"\n"+"\n"+ch->getName()+" has added the book "+book+"\n"+ "\0";
-    ch->addAndRemoveInventory(book,msg[1],0);
-    return out;
-}
-
-string StompProtocol::borrow(vector<string> msg) {
-    int bookSize=msg.size()-2;
-    string book="";
-    for(int i=0;i<bookSize;i++)
-        book=book+" "+msg[2+i];
-    book=book.substr(1,book.length());
-    string out = "SEND";
-    out=out+"\n"+"destination:"+msg[1]+"\n"+"\n"+ch->getName()+" wish to borrow "+book+"\n"+ "\0";
-    ch->addAndRemoveToWish(book,0);
-    return  out;
-}
-
-string StompProtocol::returnBook(vector<string> msg) {
-    int bookSize=msg.size()-2;
-    string book="";
-    for(int i=0;i<bookSize;i++)
-        book=book+" "+msg[2+i];
-    book=book.substr(1,book.length());
-    string out = "SEND";
-    out=out+"\n"+"destination:"+msg[1]+"\n"+"\n"+"Returning "+book+ " to " +ch->getLender(book) + "\n"+ "\0";
-    ch->addAndRemoveBorrowed(book,"",1);
-    ch->addAndRemoveInventory(book,msg[1],1);
-    return  out;
-} */
 
 string StompProtocol::join(vector<string> msg) {
     string out = "SUBSCRIBE";
@@ -238,93 +207,6 @@ string StompProtocol::message(string body){
     cout << body << endl;
     return body;
 }
-
-// string StompProtocol::message(vector<string> msg) {
-//     vector<string> tokens;
-//     string out="";
-//     string topic = look4Header("destination", msg);
-//     string message = msg[msg.size()-1];
-//     cout<<topic+":"+message<<endl;
-//     while(message!=""){
-//         string tmp;
-//         if(message.find(" ")==std::string::npos) {
-//             tmp = message;
-//             tokens.push_back(tmp);
-//             break;
-//         }
-//         tmp=message.substr(0,message.find(" "));
-//         tokens.push_back(tmp);
-//         message=message.substr(message.find(" ")+1,message.length());
-//     }
-
-    // if((tokens[0]!=mConnectionHandler->getName())&((tokens.size()>1)&&(tokens[1]=="wish"))){
-    //         int bookSize=tokens.size()-4;
-    //         string book="";
-    //         for(int i=0;i<bookSize;i++)
-    //             book=book+" "+tokens[4+i];
-    //         book=book.substr(1,book.length());
-    //         if (mConnectionHandler->hasBook(book,topic)){
-    //             string message=mConnectionHandler->getName()+" has "+book;
-    //             out=sendFrame(message,topic);
-    //              return out;
-    //         }
-    //     }
-
-
-    // if((tokens[0]=="Returning")&((tokens[tokens.size()-1]==mConnectionHandler->getName()))) {
-    //     cout<< mConnectionHandler->getName() + " in returning action"<<endl;
-    //     int bookSize=tokens.size()-3;
-    //     string book="";
-    //     for(int i=0;i<bookSize;i++)
-    //         book=book+" "+tokens[1+i];
-    //     book=book.substr(1,book.length());
-    //     if(mConnectionHandler->isBorrowed(book)){
-    //         cout<<mConnectionHandler->getName() + " is in borrowed need to return to " + mConnectionHandler->getLender(book)<<endl;
-    //         string out = "SEND";
-    //         out=out+"\n"+"destination:"+topic+"\n"+"\n"+"Returning  "+book+ " to " +mConnectionHandler->getLender(book) + "\n";
-    //         mConnectionHandler->addAndRemoveBorrowed(book,"",1);
-    //         return  out;
-    //     }
-    //     mConnectionHandler->addAndRemoveInventory(book, topic, 0);
-    //     mConnectionHandler->addAndRemoveBorrowed(book, "", 1);
-    // }
-    // if(tokens[0]=="book"){
-    //     string message=mConnectionHandler->getName()+": ";
-    //     vector <string> inv = mConnectionHandler->getBooks(topic);
-    //     for(string book:inv) {
-    //         message = message + book + ",";
-    //     }
-    //     message=message.substr(0,message.length()-1);
-    //     out=send(message,topic);
-    //     return out;
-    // }
-
-    // if(tokens[0]=="Taking"&&(tokens[tokens.size()-1]==mConnectionHandler->getName())){
-    //     int bookSize=tokens.size()-3;
-    //     string book="";
-    //     for(int i=0;i<bookSize;i++)
-    //         book=book+" "+tokens[1+i];
-    //     book=book.substr(1,book.length());
-    //     mConnectionHandler->addAndRemoveInventory(book,topic,1);
-    // }
-    // if(tokens.size()>1 &&(tokens[1]=="has")) {
-    //     int bookSize=tokens.size()-2;
-    //     string book="";
-    //     for(int i=0;i<bookSize;i++)
-    //         book=book+" "+tokens[2+i];
-    //     book=book.substr(1,book.length());
-    //     if (mConnectionHandler->wished(book)) {
-    //         string message = "Taking " + book + " from " + tokens[0];
-    //         mConnectionHandler->addAndRemoveBorrowed(book, tokens[0], 0);
-    //         mConnectionHandler->addAndRemoveToWish(book,1);
-    //         mConnectionHandler->addAndRemoveInventory(book,topic,0);
-    //         out = send(message, topic);
-    //         return out;
-    //     }
-//     }
-
-//     return out;
-// }
 
 string StompProtocol::send(string msg, string topic) {
     string out="SEND";

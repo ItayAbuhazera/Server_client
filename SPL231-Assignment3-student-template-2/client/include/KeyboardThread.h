@@ -15,5 +15,4 @@ public:
 private:
     ConnectionHandler* mConnectionHandler;
     StompProtocol* mProtocol;
-
 };
