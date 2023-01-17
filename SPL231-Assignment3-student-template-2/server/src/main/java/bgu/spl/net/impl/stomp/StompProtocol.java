@@ -1,22 +1,24 @@
 package bgu.spl.net.impl.stomp;
 
 import bgu.spl.net.api.StompMessagingProtocol;
+import bgu.spl.net.srv.ConnectionHandler;
 import bgu.spl.net.srv.Connections;
 
 import java.util.Hashtable;
 
 public class StompProtocol implements StompMessagingProtocol<StompFrame> {
-    private int connectionId;
     private ConnectionsImpl<StompFrame> connections;
     private static final Hashtable<String, Integer> commandToInt = new Hashtable<>();
+
     private boolean shouldTerminate;
-    private int msgId;
+    private static int msgId;
+    private static int nextConnectionId;
 
     public StompProtocol(){
-        connectionId = -1;
         connections = new ConnectionsImpl<>();
         shouldTerminate = false;
         msgId = -1;
+        nextConnectionId = 0;
         commandToInt.put("CONNECT", 1);
         commandToInt.put("SEND", 2);
         commandToInt.put("SUBSCRIBE", 3);
@@ -25,9 +27,8 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     }
 
     @Override
-    public void start(int connectionId, Connections<StompFrame> connections) {
-//        this.connectionId = connectionId;
-//        this.connections = connections;
+    public void start(ConnectionHandler<StompFrame> ch, int connectionId) {
+
     }
 
     private int assignMsgId(){
@@ -36,50 +37,57 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     }
 
     @Override
-    public StompFrame process(StompFrame newFrame) {
+    public StompFrame process(StompFrame newFrame, ConnectionHandler<StompFrame> ch) {
+        int connectionId = connections.connect(ch);
+        System.out.println("CH with id: " + connectionId);
+
+        System.out.println("=== Received ===");
+        System.out.println(newFrame);
+        //System.out.println(newFrame.toString());
 
         switch (commandToInt.get(newFrame.getCommand())) {
             case 1 -> {
                 //CONNECT
-                connect(newFrame);
+                connect(connectionId, newFrame);
             }
 
             case 2 -> {
                 //SEND
-                send(newFrame);
+                send(connectionId, newFrame);
             }
 
             case 3 -> {
                 //SUBSCRIBE
-                subscribe(newFrame);
+                subscribe(connectionId, newFrame);
             }
 
             case 4 -> {
                 //UNSUBSCRIBE
-                unsubscribe(newFrame);
+                unsubscribe(connectionId, newFrame);
             }
 
             case 5 -> {
                 //DISCONNECT
-                disconnect(newFrame);
+                disconnect(connectionId, newFrame);
             }
 
             //Invalid command
             default -> {
-                error(connectionId, "Invalid frame", "", newFrame);
+                error(connectionId, "Invalid frame", newFrame.getCommand(), newFrame);
             }
         }
         return null;
     }
 
-    private void connect(StompFrame frame){
+    private void connect(int connectionId, StompFrame frame){
         if (frame.getHeaders().containsKey("accept-version")) {
-            if (frame.getHeaders().get("accept-version").equals("1.2")) {
+            if (frame.getHeaderValue("accept-version").equals("1.2")) {
                     if(connections.getUserNamePassword().containsKey(frame.getHeaderValue("login"))) {
                         if (connections.getUserNamePassword().get(frame.getHeaders().get("login")).equals(frame.getHeaders().get("passcode"))) {
                             Hashtable<String, String> sendHeaders = new Hashtable<>();
-                            sendHeaders.put("version", frame.getHeaderValue("version"));
+                            sendHeaders.put("version", frame.getHeaderValue("accept-version"));
                             connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
+                            System.out.println(frame.getHeaderValue("login") + "connected");
 
                         } else {
                             error(connectionId, "Invalid login or password", "", frame);
@@ -87,6 +95,10 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
                     }
                         else{
                             connections.register(frame.getHeaderValue("login"), frame.getHeaderValue("passcode"));
+                            Hashtable<String, String> sendHeaders = new Hashtable<>();
+                            sendHeaders.put("version", frame.getHeaderValue("accept-version"));
+                            connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
+                            System.out.println(frame.getHeaderValue("login") + " registered");
                         }
             } else {
                 error(connectionId, "Invalid version", "", frame);
@@ -94,9 +106,10 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         } else {
             error(connectionId, "Missing version", "", frame);
         }
+
     }
 
-    private void send(StompFrame frame){
+    private void send(int connectionId, StompFrame frame){
         if (frame.getHeaders().containsKey("destination")) {
             if (!frame.getBody().isEmpty()) {
                 Hashtable<String, String> sendHeaders = new Hashtable<>();
@@ -104,8 +117,9 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
                 sendHeaders.put("subscription", String.valueOf(connectionId));
                 sendHeaders.put("message-id", String.valueOf(assignMsgId()));
                 connections.send(frame.getHeaderValue("destination"), frame);
+                System.out.println("Sent messasge to " + frame.getHeaderValue("login"));
                 if(frame.getHeaders().containsKey("receipt-id"))
-                    receipt(frame);
+                    receipt(connectionId, frame);
             } else {
                 error(connectionId, "Missing body", "", frame);
             }
@@ -114,12 +128,13 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         }
     }
 
-    private void subscribe(StompFrame frame){
+    private void subscribe(int connectionId, StompFrame frame){
         if (frame.getHeaders().containsKey("destination")) {
             if (frame.getHeaders().containsKey("id")) {
                 connections.subscribe(connectionId, frame.getHeaderValue("destination"));
+                System.out.println(frame.getHeaderValue("login") + " subscribed to " + frame.getHeaderValue("destination"));
                 if(frame.getHeaders().containsKey("receipt-id"))
-                    receipt(frame);
+                    receipt(connectionId, frame);
 
             } else {
                 error(connectionId, "Missing id", "", frame);
@@ -129,12 +144,13 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         }
     }
 
-    private void unsubscribe(StompFrame frame){
+    private void unsubscribe(int connectionId, StompFrame frame){
         if (frame.getHeaders().containsKey("destination")) {
             if (frame.getHeaders().containsKey("id")) {
                 connections.unsubscribe(connectionId, frame.getHeaderValue("destination"));
+                System.out.println(frame.getHeaderValue("login") + "unsubscribed from " + frame.getHeaderValue("destination"));
                 if(frame.getHeaders().containsKey("receipt-id"))
-                    receipt(frame);
+                    receipt(connectionId, frame);
             } else {
                 error(connectionId, "Missing id", "", frame);
             }
@@ -143,30 +159,38 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         }
     }
 
-    private void disconnect(StompFrame sourceFrame){
-        receipt(sourceFrame);
-        connections.disconnect(connectionId);
+    private void disconnect(int connectionId, StompFrame sourceFrame){
+        if(sourceFrame.getHeaders().containsKey("receipt")){
+            receipt(connectionId, sourceFrame);
+            connections.disconnect(connectionId);
+            System.out.println(connectionId + " disconnected");
+        } else {
+            error(connectionId, "Missing receipt", "", sourceFrame);
+        }
     }
 
     private void error(int connectionId, String message, String body, StompFrame sourceFrame){
 
         Hashtable<String, String> sendHeaders = new Hashtable<>();
         sendHeaders.put("message", message);
-        if(sourceFrame.getHeaders().containsKey("receipt - id"))
-            sendHeaders.put("receipt - id", message);
-        if(sourceFrame.getHeaders().containsKey("message - id"))
-            sendHeaders.put("message - id", message);
+        if(sourceFrame.getHeaders().containsKey("receipt-id"))
+            sendHeaders.put("receipt-id", message);
+        if(sourceFrame.getHeaders().containsKey("message-id"))
+            sendHeaders.put("message-id", message);
         connections.send(connectionId, new StompFrame("ERROR", sendHeaders, body));
         connections.disconnect(connectionId);
     }
 
-    private void receipt(StompFrame sourceFrame){
+    private void receipt(int connectionId, StompFrame sourceFrame){
         Hashtable<String, String> receiptHeaders = new Hashtable<>();
-        receiptHeaders.put("receipt-id", sourceFrame.getHeaderValue("receipt-id"));
+        receiptHeaders.put("receipt-id", sourceFrame.getHeaderValue("receipt"));
         connections.send(connectionId, new StompFrame("RECEIPT", receiptHeaders, ""));
     }
 
+    @Override
+    public void start(int connectionId, Connections<StompFrame> connections) {
 
+    }
 
     @Override
     public boolean shouldTerminate() {

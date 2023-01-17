@@ -17,7 +17,7 @@ public interface Connections<T> {
 
     void unsubscribeAll(int connectionId);
 
-    void connect(ConnectionHandler<T> handler);
+    int connect(ConnectionHandler<T> handler);
 
     ConcurrentHashMap<String, String> getUserNamePassword();
 }
