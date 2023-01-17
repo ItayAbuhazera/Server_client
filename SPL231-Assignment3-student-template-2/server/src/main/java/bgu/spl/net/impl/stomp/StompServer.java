@@ -29,12 +29,6 @@ public class StompServer extends BaseServer {
         this.sock = null;
         this.connectionsImpl = new ConnectionsImpl();
     }
-//    public StompServer(int port, Supplier<MessagingProtocol<T>>  protocolFactory, Supplier<MessageEncoderDecoder<T>> encdecFactory) {
-//        this(port, protocolFactory, encdecFactory);
-//        this.port = port;
-//        this.protocolFactory = protocolFactory;
-//        this.encdecFactory = encdecFactory;
-//    }
 
     public static void main(String[] args) {
         int port = Integer.parseInt(args[0]);

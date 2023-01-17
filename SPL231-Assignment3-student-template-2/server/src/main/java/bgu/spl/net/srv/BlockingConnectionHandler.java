@@ -16,6 +16,8 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     private BufferedOutputStream out;
     private volatile boolean connected = true;
 
+    private int connectionId;
+
     public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, MessagingProtocol<T> protocol) { //for tpc
         this.sock = sock;
         this.encdec = reader;
@@ -33,7 +35,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
                 T nextMessage = encdec.decodeNextByte((byte) read);
                 if (nextMessage != null) {
-                    T response = protocol.process(nextMessage);
+                    T response = protocol.process(nextMessage, this);
                     if (response != null) {
                         out.write(encdec.encode(response));
                         out.flush();

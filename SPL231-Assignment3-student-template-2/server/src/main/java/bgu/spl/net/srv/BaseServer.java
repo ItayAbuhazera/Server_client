@@ -14,6 +14,9 @@ public abstract class BaseServer<T> implements Server<T> {
     private final Supplier<MessageEncoderDecoder<T>> encdecFactory;
     private ServerSocket sock;
 
+    private int nextId;
+
+
     public BaseServer(
             int port,
             Supplier<MessagingProtocol<T>> protocolFactory,
@@ -23,6 +26,7 @@ public abstract class BaseServer<T> implements Server<T> {
         this.protocolFactory = protocolFactory;
         this.encdecFactory = encdecFactory;
 		this.sock = null;
+        this.nextId = 0;
     }
 
     @Override
