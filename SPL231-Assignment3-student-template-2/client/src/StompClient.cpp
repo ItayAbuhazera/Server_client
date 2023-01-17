@@ -14,21 +14,27 @@ int main(int argc, char *argv[]) {
     std::thread thread(&KeyboardThread::run, &kbThread);
     bool shouldTerminate = false;
     
-    while(!shouldTerminate){
+    while(1){
         //Receive
         if(ch->isLoggedIn()){
             std::string msg = "";
             if(ch->getFrameAscii(msg, '\0')){
                 StompFrame recFrame(msg);
                 shouldTerminate = stompProtocol->processFrame(recFrame);
+                if(shouldTerminate)
+                    kbThread.terminate();
                 msg.clear();
             } else {
                 shouldTerminate = true;
+                kbThread.terminate();
             }
         }
     }
+    ch->setLoggedIn(false);
     kbThread.terminate();
     thread.join();
+    ch->close();
+    std::cout << "Disconnected" << std::endl;
     delete(ch);
     delete(stompProtocol);
 	return 0;

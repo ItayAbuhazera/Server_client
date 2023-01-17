@@ -22,13 +22,15 @@ void KeyboardThread::terminate(){
 }
 
 void KeyboardThread::run() {
-    while(!shouldTerminate) {
+    while(1) {
         const short bufferSize = 1024;
         char buffer[bufferSize];
         std::cin.getline(buffer, bufferSize);
         std::string line(buffer);
-        const std::string out = mProtocol -> processKeyboard(line);
-        if(out != "" && mConnectionHandler->isLoggedIn() && !shouldTerminate) {
+        std::string out = "";
+        if(!shouldTerminate)
+            out = mProtocol -> processKeyboard(line);
+        if(!shouldTerminate && out != "" && mConnectionHandler->isLoggedIn()) {
             mConnectionHandler -> sendFrameAscii(out, '\0');
         }
     }
