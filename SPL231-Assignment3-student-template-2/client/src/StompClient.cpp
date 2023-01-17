@@ -4,7 +4,7 @@
 #include <thread>
 #include <string>
 
-#include <iostream>;
+#include <iostream>
 
 int main(int argc, char *argv[]) {
 	ConnectionHandler* ch = new ConnectionHandler();
