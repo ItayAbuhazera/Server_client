@@ -131,8 +131,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     private void subscribe(int connectionId, StompFrame frame){
         if (frame.getHeaders().containsKey("destination")) {
             if (frame.getHeaders().containsKey("id")) {
-                connections.subscribe(connectionId, frame.getHeaderValue("destination"));
-                System.out.println(frame.getHeaderValue("login") + " subscribed to " + frame.getHeaderValue("destination"));
+                connections.subscribe(connectionId, Integer.parseInt(frame.getHeaderValue("id")), frame.getHeaderValue("destination"));
                 if(frame.getHeaders().containsKey("receipt-id"))
                     receipt(connectionId, frame);
 
@@ -145,17 +144,13 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     }
 
     private void unsubscribe(int connectionId, StompFrame frame){
-        if (frame.getHeaders().containsKey("destination")) {
-            if (frame.getHeaders().containsKey("id")) {
-                connections.unsubscribe(connectionId, frame.getHeaderValue("destination"));
-                System.out.println(frame.getHeaderValue("login") + "unsubscribed from " + frame.getHeaderValue("destination"));
-                if(frame.getHeaders().containsKey("receipt-id"))
-                    receipt(connectionId, frame);
-            } else {
-                error(connectionId, "Missing id", "", frame);
-            }
+        if (frame.getHeaders().containsKey("id")) {
+            if(!connections.unsubscribe(connectionId, Integer.parseInt(frame.getHeaderValue("id"))))
+                error(connectionId, "Invalid subscription id", "", frame);
+            if(frame.getHeaders().containsKey("receipt-id"))
+                receipt(connectionId, frame);
         } else {
-            error(connectionId, "Missing destination", "", frame);
+            error(connectionId, "Missing id", "", frame);
         }
     }
 
@@ -163,7 +158,6 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         if(sourceFrame.getHeaders().containsKey("receipt")){
             receipt(connectionId, sourceFrame);
             connections.disconnect(connectionId);
-            System.out.println(connectionId + " disconnected");
         } else {
             error(connectionId, "Missing receipt", "", sourceFrame);
         }
