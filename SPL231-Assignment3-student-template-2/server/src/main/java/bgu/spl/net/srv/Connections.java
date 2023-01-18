@@ -11,9 +11,9 @@ public interface Connections<T> {
 
     void disconnect(int connectionId);
 
-    void subscribe(int connectionId, String channel);
+    boolean subscribe(int connectionId, int subId, String channel);
 
-    void unsubscribe(int connectionId, String channel);
+    boolean unsubscribe(int connectionId, int subId);
 
     void unsubscribeAll(int connectionId);
 

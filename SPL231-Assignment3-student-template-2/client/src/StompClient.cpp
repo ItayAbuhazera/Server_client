@@ -12,27 +12,28 @@ int main(int argc, char *argv[]) {
     StompProtocol* stompProtocol  = new StompProtocol(*ch);
     KeyboardThread  kbThread(*ch, *stompProtocol);
     std::thread thread(&KeyboardThread::run, &kbThread);
+    
     while(1){
-        if(ch -> isLoggedIn()) {
-            std::string ans = "";
-            if (!ch -> getFrameAscii(ans, '\0')) {
-                std::cout << "Disconnected. Exiting...\n" << std::endl;
-                break;
+        //Receive
+        if(ch->isLoggedIn()){
+            std::string msg = "";
+            if(ch->getFrameAscii(msg, '\0')){
+                StompFrame recFrame(msg);
+                stompProtocol->processFrame(recFrame);
+                msg.clear();
             }
-            std::string out = "";
-            if(ans.back() == '\0'){
-                StompFrame readFrame(ans);
-                out = stompProtocol -> processFrame(ans);
-            }
-            if (out != "")
-                if (!ch -> sendFrameAscii(out, '\0')) {
-                    std::cout << "Disconnected. Exiting...\n" << std::endl;
-                    break;
-                }
         }
     }
+    ch->setLoggedIn(false);
     thread.join();
+    ch->close();
+    std::cout << "Disconnected" << std::endl;
     delete(ch);
     delete(stompProtocol);
 	return 0;
 }
+
+/*
+ip route show default
+login 172.29.48.1:7777 or or
+*/

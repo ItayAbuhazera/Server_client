@@ -115,6 +115,11 @@ void ConnectionHandler::close() {
 	}
 }
 
+void ConnectionHandler::disconnect(){
+	setLoggedIn(false);
+    close();
+}
+
 bool ConnectionHandler::isLoggedIn() const{
 	return loggedIn;
 }

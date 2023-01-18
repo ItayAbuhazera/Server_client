@@ -7,20 +7,12 @@
 
 using namespace std;
 
-StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch),
-                                                        subscriptionsByTopic(unordered_map<string,int>()),
-                                                        subscriptionsById(unordered_map<int,string>()),
-                                                        receipts(unordered_map<int,pair<string,bool>>()),
-                                                        commands()
+StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch), commands(), subscriptions()
 {
     initCommands();
 }
 
-StompProtocol::StompProtocol(const StompProtocol& protocol): mDisconnectRec(0), mReceiptCounter(1), mSubId(0), mConnectionHandler(),
-                                                        subscriptionsByTopic(unordered_map<string,int>()),
-                                                        subscriptionsById(unordered_map<int,string>()),
-                                                        receipts(unordered_map<int,pair<string,bool>>()),
-                                                        commands()
+StompProtocol::StompProtocol(const StompProtocol& protocol): mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(), commands(), subscriptions()
 {
     initCommands();
 }
@@ -35,10 +27,10 @@ void StompProtocol::initCommands(){
     //Client
     commands["login"] = 0;
     //commands["connect"] = 1;
-    commands["subscribe"] = 2;
-    commands["unsubscribe"] = 3;
-    commands["send"] = 5;
-    commands["disconnect"] = 4;
+    commands["join"] = 2;
+    commands["exit"] = 3;
+    commands["logout"] = 4;
+    //commands["send"] = 5;
 
     //Server
     commands["MESSAGE"] = -1;
@@ -59,10 +51,60 @@ vector<string> StompProtocol::tokenize(string source, char delimiter){
     return tokens;
 }
 
+bool StompProtocol::validateCommand(vector<string> command){
+    int unsigned expectedSize = 1;
+    string structure;
+    int type = -1;
+    try{
+        type = commands.at(command[0]);
+    } catch(std::out_of_range& e){
+        cout << "Invalid command type" << endl;
+        return false;
+    }
+    
+    switch (type) {
+
+        case 0:
+            expectedSize = 4;
+            structure = "login {host:port} {username} {password}";
+            break;
+
+        case 2:
+            expectedSize = 2;
+            structure = "join {game_name}";
+            break;
+        case 3:
+            expectedSize = 2;
+            structure = "exit {game_name}";
+            try{
+                subscriptions.at(command[1]);
+            } catch(std::out_of_range& e){
+                cout << "Invalid command. Client is not subscribed to " << command[1] << endl;
+                return false;
+            }
+            break;
+    }
+
+        if(command.size() != expectedSize){
+            cout << "Invalid arguments. Expected: " << structure << endl;
+            return false;
+        }
+    return true;
+}
+
 string StompProtocol::processKeyboard(string msg) {
     vector<string> tokens = tokenize(msg, ' ');
+
+    if(!mConnectionHandler->isLoggedIn() && tokens[0] != "login"){
+        std::cout << "login first" << std::endl;
+        return "";
+    }
+
+    if(!validateCommand(tokens))
+        return "";
+
     string out;
-    switch (commands[tokens[0]]) {
+    switch (commands.at(tokens[0])) {
         //Login
         case 0:
             out = login(tokens);
@@ -71,72 +113,67 @@ string StompProtocol::processKeyboard(string msg) {
         //Subscribe
         case 2:
             out = "SUBSCRIBE\nid:" + to_string(mSubId) + "\ndestination:" + tokens[1] + "\n\n\0";
+            subscriptions[tokens[1]] = mSubId;
             mSubId++;
             break;
 
-            //Unsubscribe
+        //Unsubscribe
         case 3:
-            out = "UNSUBSCRIBE\nid:" + tokens[1] + "\n\n\0";
+            out = "UNSUBSCRIBE\nid:" + to_string(subscriptions.at(tokens[1])) + "\n\n\0";
+            subscriptions.erase(tokens[1]);
             break;
 
-            //Send
+        //Send
         case 5:
             out = "SEND\ndestination:" + tokens[1] + "\n\n" + tokens[2] + "\n\0";
             break;
 
-            //Disconnect
+        //Disconnect
         case 4:
-            out = "DISCONNECT\nreceipt:" + to_string(mReceiptCounter) + "\n\n\0";
-            mReceiptCounter++;
+            out = logout();
             break;
 
-            //Defualt - Invalid
+        //Defualt - Invalid
         default:
             std::cout << "Invalid frame code" << std::endl;
             break;
     }
-    std::cout << std::endl << out << std::endl;
-    return out;
-}
 
-string StompProtocol::processFrame(string msg) {
-    StompFrame newFrame(msg);
-    //newFrame.printFrame(1);
-    string out = "";
-    switch(commands[newFrame.getCommand()]){
-
-        //Message
-        case -1:
-        out = message(newFrame.getBody());
-        break;
-
-        //Receipt
-        case -2:
-        receipt(newFrame);
-        break;
-
-        //Connected
-        case -3:
-        std::cout << "Connected" << std::endl;
-        newFrame.printFrame(1);
-        break;
-
-        //Error
-        case -4:
-        error(newFrame);
-        break;
-
-        //Defualt - Invalid (Error)
-        default:
-        error(newFrame);
-        break;
+    if(out != ""){
+        std::cout << "=== SENT ===" << std::endl;
+        std::cout << out << std::endl;
     }
     return out;
 }
 
-void StompProtocol::error(StompFrame frame) {
-    frame.printFrame(0);
-    disconnect();
+void StompProtocol::processFrame(StompFrame newFrame) {
+    std::cout << "=== RECEIVED ===" << std::endl;
+    newFrame.printFrame(1);
+    int recId;
+    switch(commands[newFrame.getCommand()]){
+
+        //Message
+        case -1:
+        break;
+
+        //Receipt
+        case -2:
+        recId = std::stoi(newFrame.getHeaderValue("receipt-id"));
+        if(recId == mDisconnectRec){
+            mConnectionHandler->disconnect();
+            std::cout << "Disconnected" << std::endl;
+        }
+        break;
+
+        //Connected
+        case -3:
+        break;
+
+        //Error
+        default:
+        break;
+
+    }
 }
 
 string StompProtocol::login(vector<string> msg) {
@@ -156,103 +193,13 @@ string StompProtocol::login(vector<string> msg) {
             return out;
         }
     }
-    std::cout << "Already logged in" << std::endl;
+    std::cout << "The client is already logged in, log out before trying again" << std::endl;
     return "";
 }
 
-void StompProtocol::receipt(StompFrame frame) {
-    cout << "Receipt recieved with id: " << frame.getHeaderValue("receipt-id") << endl;
-}
-
-string StompProtocol::logout(vector<string> msg) {
-    string out = "DISCONNECT";
-    out=out+"\n"+"receipt:"+to_string(mReceiptCounter)+"\n";
+string StompProtocol::logout() {
+    string out = "DISCONNECT\nreceipt:" + to_string(mReceiptCounter) + "\n\n\0";
     mDisconnectRec = mReceiptCounter;
     mReceiptCounter++;
     return out;
-}
-
-string StompProtocol::report(vector<string> msg) {
-    string out = "SEND";
-    out = out+"\n"+"destination:" + msg[1] + "\n" + "\n" + "book status" + "\n";
-    return out;
-}
-
-string StompProtocol::join(vector<string> msg) {
-    string out = "SUBSCRIBE";
-    mSubId++;
-    addToReceipts(mReceiptCounter,msg[1],true);
-    addToSubscription(msg[1],mSubId);
-    out=out+"\n"+"destination:"+msg[1]+"\n"+"id:"+to_string(mSubId)+"\n"+"receipt:"+to_string(mReceiptCounter)+"\n"+"\n" + "\0";
-    mReceiptCounter++;
-    return out;
-}
-
-string StompProtocol::exit(vector<string> msg) {
-    string out = "";
-    string topic = msg[1];
-    if(getSubId(topic)!=-1) {
-         out = "UNSUBSCRIBE";
-        int id = getSubId(topic);
-        removeSubscription(topic);
-        addToReceipts(mReceiptCounter, topic, false);
-        out = out + "\n" + "id:" + to_string(id) + "\n" + "receipt:" + to_string(mReceiptCounter) + "\n" + "\n"+ "\0";
-        mReceiptCounter++;
-    }
-    return out;
-}
-
-string StompProtocol::message(string body){
-    cout << "Message Received:" << endl;
-    cout << body << endl;
-    return body;
-}
-
-string StompProtocol::send(string msg, string topic) {
-    string out="SEND";
-    out=out+"\n"+"destination:"+topic+"\n"+"\n"+msg+"\n";
-    return out;
-}
-
-string StompProtocol::look4Header(string header,vector<string> msg) {
-    for (string s:msg){
-        int ndx =s.find(":");
-        if (s.substr(0,ndx)==header)
-            return s.substr(ndx+1, s.size()-1);
-    }
-    return "";
-}
-
-  int StompProtocol::getSubId(string topic) {
-    if (subscriptionsByTopic.count(topic)==0)
-        return -1;
-    return subscriptionsByTopic.at(topic);
-  }
-
-  void StompProtocol::addToReceipts(int recId, string topic, bool action) { //action true for subscribe false for unsubscribe
-    receipts.insert(pair<int, pair<string,bool>>(recId,pair<string, bool >(topic,action)));
-}
-unordered_map<int,pair<string,bool>> StompProtocol::getReceipts() { 
-    return receipts;
-}
-  void StompProtocol::addToSubscription(string topic, int id) {
-      subscriptionsByTopic.insert(pair<string,int>(topic,id));
-      subscriptionsById.insert(pair<int,string>(id,topic));
-
-  }
-  void StompProtocol::removeSubscription(string topic) {
-      int id = subscriptionsByTopic.at(topic);
-      subscriptionsByTopic.erase(topic);
-      subscriptionsById.erase(id);
-  }
-
-  void StompProtocol::disconnect(){
-    this->subscriptionsById.clear();
-    this->subscriptionsByTopic.clear();
-    this->receipts.clear();
-    mConnectionHandler->setLoggedIn(false);
-    mConnectionHandler->close();
-
-
-
 }

@@ -3,7 +3,7 @@
 #include "../include/StompProtocol.h"
 class ConnectionHandler;
 
-KeyboardThread::KeyboardThread(ConnectionHandler &ch, StompProtocol &protocol): mConnectionHandler(&ch), mProtocol(&protocol) {}
+KeyboardThread::KeyboardThread(ConnectionHandler &ch, StompProtocol &protocol): mConnectionHandler(&ch),mProtocol(&protocol) {}
 
 KeyboardThread::KeyboardThread(const KeyboardThread &kt): mConnectionHandler(kt.mConnectionHandler), mProtocol(kt.mProtocol) {}
 
@@ -23,8 +23,8 @@ void KeyboardThread::run() {
         char buffer[bufferSize];
         std::cin.getline(buffer, bufferSize);
         std::string line(buffer);
-        const std::string out = mProtocol -> processKeyboard(line);
-        if(out != "") {
+        std::string out = mProtocol->processKeyboard(line);
+        if(out != "" && mConnectionHandler->isLoggedIn()) {
             mConnectionHandler -> sendFrameAscii(out, '\0');
         }
     }
