@@ -12,7 +12,6 @@ int main(int argc, char *argv[]) {
     StompProtocol* stompProtocol  = new StompProtocol(*ch);
     KeyboardThread  kbThread(*ch, *stompProtocol);
     std::thread thread(&KeyboardThread::run, &kbThread);
-    bool shouldTerminate = false;
     
     while(1){
         //Receive
@@ -20,18 +19,12 @@ int main(int argc, char *argv[]) {
             std::string msg = "";
             if(ch->getFrameAscii(msg, '\0')){
                 StompFrame recFrame(msg);
-                shouldTerminate = stompProtocol->processFrame(recFrame);
-                if(shouldTerminate)
-                    kbThread.terminate();
+                stompProtocol->processFrame(recFrame);
                 msg.clear();
-            } else {
-                shouldTerminate = true;
-                kbThread.terminate();
             }
         }
     }
     ch->setLoggedIn(false);
-    kbThread.terminate();
     thread.join();
     ch->close();
     std::cout << "Disconnected" << std::endl;
@@ -39,3 +32,8 @@ int main(int argc, char *argv[]) {
     delete(stompProtocol);
 	return 0;
 }
+
+/*
+ip route show default
+login 172.29.48.1:7777 or or
+*/

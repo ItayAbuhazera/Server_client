@@ -13,19 +13,20 @@ public:
     StompProtocol(ConnectionHandler& ch);
     StompProtocol(const StompProtocol& protocol);
     const StompProtocol& operator=(const StompProtocol& protocol);
-    bool processFrame(StompFrame newFrame);
+    void processFrame(StompFrame newFrame);
     string processKeyboard(string msg);
     bool validateCommand(vector<string> command);
 
 private:
     void initCommands();
     vector<string> tokenize(string source, char delimiter);
-    string logout(vector<string> msg);
     string login(vector<string> msg);
+    string logout();
 
     int mDisconnectRec;
     int mReceiptCounter;
     int mSubId;
     ConnectionHandler* mConnectionHandler;
     map<string, int> commands;
+    map<string, int> subscriptions;
 };

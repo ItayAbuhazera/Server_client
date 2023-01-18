@@ -53,6 +53,7 @@ public:
 	// set host
 	void setHost(std::string h);
 
+	void disconnect();
 
     void setLoggedIn(bool b);
 
