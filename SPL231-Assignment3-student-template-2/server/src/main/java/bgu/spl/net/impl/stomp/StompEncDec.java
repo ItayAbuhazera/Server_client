@@ -42,9 +42,9 @@ public class StompEncDec implements MessageEncoderDecoder<StompFrame> {
 
         //body
         if(message.length() <= 2)
-            body = "<BODY>";
+            body = "";
         else
-            body = message.substring(2);
+            body = message.substring(1);
 
         return new StompFrame(command, headers, body);
     }
