@@ -22,6 +22,8 @@ private:
     vector<string> tokenize(string source, char delimiter);
     string login(vector<string> msg);
     string logout();
+    string send(const string& dest, const string& body);
+    string report(const string& file);
 
     int mDisconnectRec;
     int mReceiptCounter;

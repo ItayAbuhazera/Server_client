@@ -4,6 +4,7 @@
 #include "../include/StompProtocol.h"
 #include "../include/ConnectionHandler.h"
 #include "../include/StompFrame.h"
+#include "../include/event.h"
 
 using namespace std;
 
@@ -31,6 +32,7 @@ void StompProtocol::initCommands(){
     commands["exit"] = 3;
     commands["logout"] = 4;
     commands["send"] = 5;
+    commands["report"] = 6;
 
     //Server
     commands["MESSAGE"] = -1;
@@ -97,6 +99,10 @@ bool StompProtocol::validateCommand(vector<string> command){
             } else 
                 return true;
             break;
+
+        case 6:
+            return true;
+            break;
     }
 
         if(command.size() != expectedSize){
@@ -140,17 +146,22 @@ string StompProtocol::processKeyboard(string msg) {
             subscriptions.erase(tokens[1]);
             break;
 
+        //Disconnect
+        case 4:
+            out = logout();
+            break;
+        
         //Send
         case 5:
             out = tokens[2] + " ";
             for (int unsigned i=3; i<tokens.size(); i++)
                 out += " " + tokens[i];
-            out = "SEND\ndestination:" + tokens[1] + "\n\n" + out + "\n\0";
+            out = send(tokens[1], out);
             break;
 
-        //Disconnect
-        case 4:
-            out = logout();
+        //Report
+        case 6:
+            out = report(tokens[1]);
             break;
 
         //Defualt - Invalid
@@ -221,5 +232,48 @@ string StompProtocol::logout() {
     string out = "DISCONNECT\nreceipt:" + to_string(mReceiptCounter) + "\n\n\0";
     mDisconnectRec = mReceiptCounter;
     mReceiptCounter++;
+    return out;
+}
+
+string StompProtocol::send(const string& destination, const string& body){
+    return "SEND\ndestination:" + destination + "\n\n" + body + "\n\0";
+}
+
+string StompProtocol::report(const string& file){
+    string out = "";
+    names_and_events allEvents = parseEventsFile(file);
+
+    string dest = '/' + allEvents.team_a_name + '_' + allEvents.team_b_name;
+
+    string head = "";
+    head += "user: \n";
+    head += "team a: " + allEvents.team_a_name + '\n';
+    head += "team b: " + allEvents.team_b_name + '\n';
+
+    string body = "";
+    for (Event event : allEvents.events){
+        body += "event name: " + event.get_name() + '\n';
+        body += "time: " + to_string(event.get_time()) + '\n';
+
+        body += "general game updates:\n";
+        for(auto update : event.get_game_updates()){
+            body += update.first + ": " + update.second + '\n';
+        }
+
+        body += "team a updates:\n";
+        for(auto update : event.get_team_a_updates()){
+            body += update.first + ": " + update.second + '\n';
+        }
+
+        body += "team b updates:\n";
+        for(auto update : event.get_team_b_updates()){
+            body += update.first + ": " + update.second + '\n';
+        }
+
+        body += "description: " + '\n';
+        body += event.get_discription() + '\n';
+
+        out += send(dest, head + body);
+    }
     return out;
 }
