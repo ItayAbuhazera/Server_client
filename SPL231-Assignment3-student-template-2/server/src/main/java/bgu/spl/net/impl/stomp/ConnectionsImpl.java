@@ -10,24 +10,41 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ConnectionsImpl<T> implements Connections<T> {
-    public ConcurrentHashMap<Integer, ConnectionHandler<T>> connections;
-    private ConcurrentHashMap<String, ArrayList<ConnectionHandler<T>>> channelToSubscribers;
-    private ConcurrentHashMap<ConnectionHandler<T>, ArrayList<String>> SubscriberToChannels;
-    private ConcurrentHashMap<String, String> userNamePassword;
+    private static ConnectionsImpl<StompFrame> instance;
+    private volatile ConcurrentHashMap<Integer, ConnectionHandler<T>> connections;
+    private volatile ConcurrentHashMap<String, String> userNamePassword;
 
     // ConnectionID : <SubId : Channel>
-    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, String>> subscriptionsIds;
+    private volatile ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, String>> subscriptionsIds;
 
-    private int nextId;
+    private static int nextId;
     private boolean shouldTerminate = false;
 
-    public ConnectionsImpl() {
+    private ConnectionsImpl() {
         this.subscriptionsIds = new ConcurrentHashMap<>();
         this.connections = new ConcurrentHashMap<>();
-        this.channelToSubscribers = new ConcurrentHashMap<>();
-        this.SubscriberToChannels = new ConcurrentHashMap<>();
         this.userNamePassword = new ConcurrentHashMap<>();
         this.nextId = 0;
+    }
+
+    public static ConnectionsImpl<StompFrame> getInstance(){
+        if(instance == null)
+            instance = new ConnectionsImpl<StompFrame>();
+
+        return instance;
+    }
+
+    public int getSubId(int connectionId, String channel){
+        ConcurrentHashMap<Integer, String> subs = subscriptionsIds.get(connectionId);
+
+        if(subs == null)
+            return -1;
+
+        for (Integer key : subs.keySet()) {
+            if(subs.get(key).equals(channel))
+                return key;
+        }
+        return -1;
     }
 
 
@@ -37,31 +54,40 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     @Override
-    public synchronized void subscribe(int connectionId, int subId, String channel){
+    public synchronized boolean subscribe(int connectionId, int subId, String channel){
         ConcurrentHashMap<Integer, String> subs = subscriptionsIds.get(connectionId);
+
         if(subs == null)
             subs = new ConcurrentHashMap<>();
+
+        if(subs.containsValue(channel))
+            return false;
+
         subs.put(subId, channel);
         subscriptionsIds.put(connectionId, subs);
-        System.out.println(connectionId + " sub to " + channel + " with id " +subId);
+
+        //subscriptionsIds.forEach((client, subMap) -> System.out.println(client + subMap.toString()));
+
+        return true;
     }
 
     @Override
     public synchronized boolean unsubscribe(int connectionId, int subId){
         ConcurrentHashMap<Integer, String> subs = subscriptionsIds.get(connectionId);
-        if(subs == null)
+        if(subs == null || !subs.containsKey(subId))
             return false;
-        String unsub = subs.remove(subId);
+        subs.remove(subId);
         subscriptionsIds.put(connectionId, subs);
-        System.out.println(connectionId + " unsub from " + subId + " which was " +unsub);
+
+        //subscriptionsIds.forEach((client, subMap) -> System.out.println(client + subMap.toString()));
+
         return true;
     }
 
     @Override
     public synchronized boolean send(int connectionId, T msg) {
         ConnectionHandler<T> client = connections.get(connectionId);
-        System.out.println("=== Sent ===");
-        System.out.println(msg);
+        System.out.println('\n' + "=== Sent ===" + '\n' + msg);
         if(client != null)
             synchronized (client){
                 client.send(msg);
@@ -72,11 +98,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     @Override
     public synchronized void send(String channel, T msg) {
-        List<ConnectionHandler<T>> users = channelToSubscribers.get(channel);
-        if(users == null)
-            return;
-        for (ConnectionHandler<T> user: users) {
-            user.send(msg);
+        for (Integer key : subscriptionsIds.keySet()) {
+            if(subscriptionsIds.get(key).containsValue(channel)){
+                send(key, msg);
+            }
         }
     }
 
@@ -101,17 +126,17 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public synchronized int connect(ConnectionHandler<T> ch) {
         for (Integer key : connections.keySet()) {
             ConnectionHandler<T> value = connections.get(key);
-            if(value == ch)
+            if(value.hashCode() == ch.hashCode())
                 return key;
         }
-        connections.put(nextId, ch);
-
         nextId++;
-        return nextId - 1;
+        connections.put(nextId, ch);
+        return nextId;
     }
 
     public synchronized void register(String login, String passcode) {
         userNamePassword.put(login, passcode);
     }
+
 }
 
