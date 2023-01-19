@@ -27,7 +27,7 @@ public class StompServer extends BaseServer {
         this.protocolFactory = protocolFactory;
         this.encdecFactory = encdecFactory;
         this.sock = null;
-        this.connectionsImpl = new ConnectionsImpl();
+        this.connectionsImpl = ConnectionsImpl.getInstance();
     }
 
     public static void main(String[] args) {
