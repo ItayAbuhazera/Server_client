@@ -30,7 +30,7 @@ void StompProtocol::initCommands(){
     commands["join"] = 2;
     commands["exit"] = 3;
     commands["logout"] = 4;
-    //commands["send"] = 5;
+    commands["send"] = 5;
 
     //Server
     commands["MESSAGE"] = -1;
@@ -72,6 +72,10 @@ bool StompProtocol::validateCommand(vector<string> command){
         case 2:
             expectedSize = 2;
             structure = "join {game_name}";
+            if(subscriptions.count(command[1]) > 0){
+                cout << "Client is already subscribed to " << command[1]  << " with id " << subscriptions[command[1]] << endl;
+                return false;
+            }
             break;
         case 3:
             expectedSize = 2;
@@ -83,6 +87,16 @@ bool StompProtocol::validateCommand(vector<string> command){
                 return false;
             }
             break;
+
+        case 5:
+            expectedSize = 3;
+            structure = "send {destination} {message}";
+            if(command.size() < expectedSize){
+                cout << "Invalid arguments. Expected: " << structure << endl;
+                return false;
+            } else 
+                return true;
+            break;
     }
 
         if(command.size() != expectedSize){
@@ -93,6 +107,9 @@ bool StompProtocol::validateCommand(vector<string> command){
 }
 
 string StompProtocol::processKeyboard(string msg) {
+    if(msg == "")
+        return "";
+
     vector<string> tokens = tokenize(msg, ' ');
 
     if(!mConnectionHandler->isLoggedIn() && tokens[0] != "login"){
@@ -125,7 +142,10 @@ string StompProtocol::processKeyboard(string msg) {
 
         //Send
         case 5:
-            out = "SEND\ndestination:" + tokens[1] + "\n\n" + tokens[2] + "\n\0";
+            out = tokens[2] + " ";
+            for (int unsigned i=3; i<tokens.size(); i++)
+                out += " " + tokens[i];
+            out = "SEND\ndestination:" + tokens[1] + "\n\n" + out + "\n\0";
             break;
 
         //Disconnect
