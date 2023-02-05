@@ -6,6 +6,8 @@
 #include "../include/ConnectionHandler.h"
 #include "../include/StompFrame.h"
 
+enum Type {disconnect, subscribe, unsubscribe};
+
 // TODO: implement the STOMP protocol
 class StompProtocol
 {
@@ -31,4 +33,5 @@ private:
     ConnectionHandler* mConnectionHandler;
     map<string, int> commands;
     map<string, int> subscriptions;
+    map<int, tuple<Type, int, string>> excpectedReciepts;
 };

@@ -35,5 +35,5 @@ int main(int argc, char *argv[]) {
 
 /*
 ip route show default
-login 172.24.144.1:7777 or or
+login 192.168.48.1:7777 or or
 */

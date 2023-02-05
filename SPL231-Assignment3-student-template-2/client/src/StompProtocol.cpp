@@ -8,12 +8,14 @@
 
 using namespace std;
 
-StompProtocol::StompProtocol(ConnectionHandler& ch):    mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch), commands(), subscriptions()
+StompProtocol::StompProtocol(ConnectionHandler& ch): 
+mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch), commands(), subscriptions(), excpectedReciepts()
 {
     initCommands();
 }
 
-StompProtocol::StompProtocol(const StompProtocol& protocol): mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(), commands(), subscriptions()
+StompProtocol::StompProtocol(const StompProtocol& protocol): 
+mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(), commands(), subscriptions(), excpectedReciepts()
 {
     initCommands();
 }
@@ -135,19 +137,22 @@ string StompProtocol::processKeyboard(string msg) {
 
         //Subscribe
         case 2:
-            out = "SUBSCRIBE\nid:" + to_string(mSubId) + "\ndestination:" + tokens[1] + "\n\n\0";
-            subscriptions[tokens[1]] = mSubId;
+            out = "SUBSCRIBE\nreceipt:" + to_string(mReceiptCounter) + "\nid:" + to_string(mSubId) + "\ndestination:" + tokens[1] + "\n\n\0";
+            excpectedReciepts[mReceiptCounter] = make_tuple(subscribe, mSubId, tokens[1]);
             mSubId++;
+            mReceiptCounter++;
             break;
 
         //Unsubscribe
         case 3:
-            out = "UNSUBSCRIBE\nid:" + to_string(subscriptions.at(tokens[1])) + "\n\n\0";
-            subscriptions.erase(tokens[1]);
+            out = "UNSUBSCRIBE\nreceipt:" + to_string(mReceiptCounter) + "\nid:" + to_string(subscriptions.at(tokens[1])) + "\n\n\0";
+            excpectedReciepts[mReceiptCounter] = make_tuple(unsubscribe, subscriptions.at(tokens[1]), tokens[1]);
+            mReceiptCounter++;
             break;
 
         //Disconnect
         case 4:
+            excpectedReciepts[mReceiptCounter] = make_tuple(disconnect, 0, "");
             out = logout();
             break;
         
@@ -170,16 +175,16 @@ string StompProtocol::processKeyboard(string msg) {
             break;
     }
 
-    if(out != ""){
+    /* if(out != ""){
         std::cout << "=== SENT ===" << std::endl;
         std::cout << out << std::endl;
-    }
+    } */
     return out;
 }
 
 void StompProtocol::processFrame(StompFrame newFrame) {
-    std::cout << "=== RECEIVED ===" << std::endl;
-    newFrame.printFrame(1);
+    //std::cout << "=== RECEIVED ===" << std::endl;
+    //newFrame.printFrame(1);
     int recId;
     switch(commands[newFrame.getCommand()]){
 
@@ -190,14 +195,40 @@ void StompProtocol::processFrame(StompFrame newFrame) {
         //Receipt
         case -2:
         recId = std::stoi(newFrame.getHeaderValue("receipt-id"));
-        if(recId == mDisconnectRec){
-            mConnectionHandler->disconnect();
-            std::cout << "Disconnected" << std::endl;
+
+        if (excpectedReciepts.count(recId)){
+            Type t = get<0>(excpectedReciepts[recId]);
+            int id = get<1>(excpectedReciepts[recId]);
+            string d = get<2>(excpectedReciepts[recId]);
+            switch(t){
+
+                case disconnect:
+                    mConnectionHandler->disconnect();
+                    std::cout << "Disconnected" << std::endl;
+                    break;
+                
+                case subscribe:
+                    subscriptions[d] = id;
+                    std::cout << "Subscribed to " + d << std::endl;
+                    break;
+                
+                case unsubscribe:
+                    subscriptions.erase(d);
+                    std::cout << "Unsubscribed from " + d << std::endl;
+                    break;
+
+                default:
+                    std::cout << "Unknown receipt received" + d << std::endl;
+                    break;
+            }
+
+            excpectedReciepts.erase(recId);
         }
         break;
 
         //Connected
         case -3:
+            std::cout << "Login successful" << std::endl;
         break;
 
         //Error
