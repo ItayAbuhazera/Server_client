@@ -31,20 +31,18 @@ public class StompEncDec implements MessageEncoderDecoder<StompFrame> {
         message = message.substring(commandIndex + 1);
 
         //headers
-        int nextIndex = message.indexOf(':');
-        while(nextIndex > -1){
-            String key = message.substring(0, nextIndex);
-            String val = message.substring(nextIndex + 1, message.indexOf('\n'));
-            headers.put(key, val);
-            message = message.substring(message.indexOf('\n') + 1);
-            nextIndex = message.indexOf(':');
+        int pos = 0;
+        String headersString = message.substring(0, message.indexOf("\n\n"));
+        String[] lines = headersString.split("\n");
+        for (String line : lines) {
+            String[] parts = line.split(":");
+            if (parts.length == 2) {
+                headers.put(parts[0], parts[1]);
+            }
         }
 
         //body
-        if(message.length() <= 2)
-            body = "";
-        else
-            body = message.substring(1);
+        body = message.substring(message.indexOf("\n\n") + 2);
 
         return new StompFrame(command, headers, body);
     }
