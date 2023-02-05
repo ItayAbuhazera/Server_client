@@ -1,6 +1,7 @@
 #include "../include/KeyboardThread.h"
 #include "../include/ConnectionHandler.h"
 #include "../include/StompProtocol.h"
+#include <vector>
 class ConnectionHandler;
 
 KeyboardThread::KeyboardThread(ConnectionHandler &ch, StompProtocol &protocol): mConnectionHandler(&ch),mProtocol(&protocol) {}
@@ -23,9 +24,10 @@ void KeyboardThread::run() {
         char buffer[bufferSize];
         std::cin.getline(buffer, bufferSize);
         std::string line(buffer);
-        std::string out = mProtocol->processKeyboard(line);
-        if(out != "" && mConnectionHandler->isLoggedIn()) {
-            mConnectionHandler -> sendFrameAscii(out, '\0');
+        vector<std::string> out = mProtocol->processKeyboard(line);
+        if(out.size() > 0 && mConnectionHandler->isLoggedIn()) {
+            for (std::string s : out)
+                mConnectionHandler -> sendFrameAscii(s, '\0');
         }
     }
 }

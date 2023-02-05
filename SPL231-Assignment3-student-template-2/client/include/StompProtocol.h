@@ -5,8 +5,11 @@
 #include <string>
 #include "../include/ConnectionHandler.h"
 #include "../include/StompFrame.h"
+#include "../include/event.h"
 
 enum Type {disconnect, subscribe, unsubscribe};
+enum Command {login, join, unjoin, logout, sendMessage, report};
+enum Frame {message, receipt, connected, error};
 
 // TODO: implement the STOMP protocol
 class StompProtocol
@@ -16,7 +19,7 @@ public:
     StompProtocol(const StompProtocol& protocol);
     const StompProtocol& operator=(const StompProtocol& protocol);
     void processFrame(StompFrame newFrame);
-    string processKeyboard(string msg);
+    vector<string> processKeyboard(string msg);
     bool validateCommand(vector<string> command);
 
 private:
@@ -25,7 +28,7 @@ private:
     string login(vector<string> msg);
     string logout();
     string send(const string& dest, const string& body);
-    string report(const string& file);
+    vector<string> report(const string& file);
 
     int mDisconnectRec;
     int mReceiptCounter;
@@ -34,4 +37,5 @@ private:
     map<string, int> commands;
     map<string, int> subscriptions;
     map<int, tuple<Type, int, string>> excpectedReciepts;
+    map<string, map<int, Event>> events;
 };

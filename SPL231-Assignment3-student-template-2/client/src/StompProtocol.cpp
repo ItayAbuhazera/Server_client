@@ -28,19 +28,19 @@ const StompProtocol& StompProtocol::operator=(const StompProtocol& protocol)
 
 void StompProtocol::initCommands(){
     //Client
-    commands["login"] = 0;
+    commands["login"] = Command::login;
     //commands["connect"] = 1;
-    commands["join"] = 2;
-    commands["exit"] = 3;
-    commands["logout"] = 4;
-    commands["send"] = 5;
-    commands["report"] = 6;
+    commands["join"] = Command::join;
+    commands["exit"] = Command::unjoin;
+    commands["logout"] = Command::logout;
+    commands["send"] = Command::sendMessage;
+    commands["report"] = Command::report;
 
     //Server
-    commands["MESSAGE"] = -1;
-    commands["RECEIPT"] = -2;
-    commands["CONNECTED"] = -3;
-    commands["ERROR"] = -4;
+    commands["MESSAGE"] = Frame::message;
+    commands["RECEIPT"] = Frame::receipt;
+    commands["CONNECTED"] = Frame::connected;
+    commands["ERROR"] = Frame::error;
 }
 
 vector<string> StompProtocol::tokenize(string source, char delimiter){
@@ -68,12 +68,12 @@ bool StompProtocol::validateCommand(vector<string> command){
     
     switch (type) {
 
-        case 0:
+        case Command::login:
             expectedSize = 4;
             structure = "login {host:port} {username} {password}";
             break;
 
-        case 2:
+        case Command::join:
             expectedSize = 2;
             structure = "join {game_name}";
             if(subscriptions.count(command[1]) > 0){
@@ -81,7 +81,7 @@ bool StompProtocol::validateCommand(vector<string> command){
                 return false;
             }
             break;
-        case 3:
+        case Command::unjoin:
             expectedSize = 2;
             structure = "exit {game_name}";
             try{
@@ -92,7 +92,7 @@ bool StompProtocol::validateCommand(vector<string> command){
             }
             break;
 
-        case 5:
+        case Command::sendMessage:
             expectedSize = 3;
             structure = "send {destination} {message}";
             if(command.size() < expectedSize){
@@ -102,8 +102,9 @@ bool StompProtocol::validateCommand(vector<string> command){
                 return true;
             break;
 
-        case 6:
-            return true;
+        case Command::report:
+            expectedSize = 2;
+            structure = "report {file}";
             break;
     }
 
@@ -114,62 +115,58 @@ bool StompProtocol::validateCommand(vector<string> command){
     return true;
 }
 
-string StompProtocol::processKeyboard(string msg) {
+vector<string> StompProtocol::processKeyboard(string msg) {
+    vector<string> out;
+    string s;
+
     if(msg == "")
-        return "";
+        return out;
 
     vector<string> tokens = tokenize(msg, ' ');
 
     if(!mConnectionHandler->isLoggedIn() && tokens[0] != "login"){
         std::cout << "login first" << std::endl;
-        return "";
+        return out;
     }
 
     if(!validateCommand(tokens))
-        return "";
+        return out;
 
-    string out;
     switch (commands.at(tokens[0])) {
-        //Login
-        case 0:
-            out = login(tokens);
+        
+        case Command::login:
+            out.push_back(login(tokens));
             break;
-
-        //Subscribe
-        case 2:
-            out = "SUBSCRIBE\nreceipt:" + to_string(mReceiptCounter) + "\nid:" + to_string(mSubId) + "\ndestination:" + tokens[1] + "\n\n\0";
+        
+        case Command::join:
+            out.push_back("SUBSCRIBE\nreceipt:" + to_string(mReceiptCounter) + "\nid:" + to_string(mSubId) + "\ndestination:" + tokens[1] + "\n\n\0");
             excpectedReciepts[mReceiptCounter] = make_tuple(subscribe, mSubId, tokens[1]);
             mSubId++;
             mReceiptCounter++;
             break;
-
-        //Unsubscribe
-        case 3:
-            out = "UNSUBSCRIBE\nreceipt:" + to_string(mReceiptCounter) + "\nid:" + to_string(subscriptions.at(tokens[1])) + "\n\n\0";
+        
+        case Command::unjoin:
+            out.push_back("UNSUBSCRIBE\nreceipt:" + to_string(mReceiptCounter) + "\nid:" + to_string(subscriptions.at(tokens[1])) + "\n\n\0");
             excpectedReciepts[mReceiptCounter] = make_tuple(unsubscribe, subscriptions.at(tokens[1]), tokens[1]);
             mReceiptCounter++;
             break;
-
-        //Disconnect
-        case 4:
+        
+        case Command::logout:
             excpectedReciepts[mReceiptCounter] = make_tuple(disconnect, 0, "");
-            out = logout();
+            out.push_back(logout());
             break;
         
-        //Send
-        case 5:
-            out = tokens[2] + " ";
+        case Command::sendMessage:
+            s = tokens[2];
             for (int unsigned i=3; i<tokens.size(); i++)
-                out += " " + tokens[i];
-            out = send(tokens[1], out);
+                s += " " + tokens[i];
+            out.push_back(send(tokens[1], s));
             break;
 
-        //Report
-        case 6:
+        case Command::report:
             out = report(tokens[1]);
             break;
 
-        //Defualt - Invalid
         default:
             std::cout << "Invalid frame code" << std::endl;
             break;
@@ -189,11 +186,12 @@ void StompProtocol::processFrame(StompFrame newFrame) {
     switch(commands[newFrame.getCommand()]){
 
         //Message
-        case -1:
+        case Frame::message:
+        newFrame.printFrame(1);
         break;
 
         //Receipt
-        case -2:
+        case Frame::receipt:
         recId = std::stoi(newFrame.getHeaderValue("receipt-id"));
 
         if (excpectedReciepts.count(recId)){
@@ -204,6 +202,7 @@ void StompProtocol::processFrame(StompFrame newFrame) {
 
                 case disconnect:
                     mConnectionHandler->disconnect();
+                    subscriptions.clear();
                     std::cout << "Disconnected" << std::endl;
                     break;
                 
@@ -227,12 +226,13 @@ void StompProtocol::processFrame(StompFrame newFrame) {
         break;
 
         //Connected
-        case -3:
+        case Frame::connected:
             std::cout << "Login successful" << std::endl;
         break;
 
         //Error
         default:
+            newFrame.printFrame(1);
         break;
 
     }
@@ -270,8 +270,8 @@ string StompProtocol::send(const string& destination, const string& body){
     return "SEND\ndestination:" + destination + "\n\n" + body + "\n\0";
 }
 
-string StompProtocol::report(const string& file){
-    string out = "";
+vector<string> StompProtocol::report(const string& file){
+    vector<string> out;
     names_and_events allEvents = parseEventsFile(file);
 
     string dest = '/' + allEvents.team_a_name + '_' + allEvents.team_b_name;
@@ -281,8 +281,8 @@ string StompProtocol::report(const string& file){
     head += "team a: " + allEvents.team_a_name + '\n';
     head += "team b: " + allEvents.team_b_name + '\n';
 
-    string body = "";
     for (Event event : allEvents.events){
+        string body = "";
         body += "event name: " + event.get_name() + '\n';
         body += "time: " + to_string(event.get_time()) + '\n';
 
@@ -301,10 +301,10 @@ string StompProtocol::report(const string& file){
             body += update.first + ": " + update.second + '\n';
         }
 
-        body += "description: " + '\n';
-        body += event.get_discription() + '\n';
+        body += "description:\n";
+        body += event.get_discription();
 
-        out += send(dest, head + body);
+        out.push_back(send(dest, head + body));
     }
     return out;
 }
