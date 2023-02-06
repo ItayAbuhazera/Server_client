@@ -25,7 +25,7 @@ void KeyboardThread::run() {
         std::cin.getline(buffer, bufferSize);
         std::string line(buffer);
         vector<std::string> out = mProtocol->processKeyboard(line);
-        if(out.size() > 0 && mConnectionHandler->isLoggedIn()) {
+        if(out.size() > 0 && mConnectionHandler->isConnected()) {
             for (std::string s : out)
                 mConnectionHandler -> sendFrameAscii(s, '\0');
         }

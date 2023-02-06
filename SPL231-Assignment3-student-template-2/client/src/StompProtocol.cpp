@@ -9,13 +9,13 @@
 using namespace std;
 
 StompProtocol::StompProtocol(ConnectionHandler& ch): 
-mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(&ch), commands(), subscriptions(), excpectedReciepts()
+mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), user(), mConnectionHandler(&ch), commands(), subscriptions(), excpectedReciepts(), allReports()
 {
     initCommands();
 }
 
 StompProtocol::StompProtocol(const StompProtocol& protocol): 
-mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), mConnectionHandler(), commands(), subscriptions(), excpectedReciepts()
+mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), user(), mConnectionHandler(), commands(), subscriptions(), excpectedReciepts(), allReports()
 {
     initCommands();
 }
@@ -167,6 +167,17 @@ vector<string> StompProtocol::processKeyboard(string msg) {
             out = report(tokens[1]);
             break;
 
+        //Just a debug for now
+        //TODO
+        case Command::summary:
+            for (auto const &pair1: allReports){
+                for (auto const &pair2: allReports[make_tuple(get<0>(pair1.first),  get<1>(pair1.first))]){
+                    string k = "(" + get<0>(pair1.first) + ", " + get<1>(pair1.first) + ")";
+                    std::cout << k << " : (" << pair2.first << " : event )" << std::endl;
+                }
+            }
+            break;
+
         default:
             std::cout << "Invalid frame code" << std::endl;
             break;
@@ -183,14 +194,21 @@ void StompProtocol::processFrame(StompFrame newFrame) {
     //std::cout << "=== RECEIVED ===" << std::endl;
     //newFrame.printFrame(1);
     int recId;
+    Event event;
+    string dest, user;
     switch(commands[newFrame.getCommand()]){
 
-        //Message
         case Frame::message:
-        newFrame.printFrame(1);
+            //newFrame.printFrame(1);
+            //std::cout << std::endl << newFrame.getBody() << std::endl;
+            event = Event(newFrame.getBody());
+            dest = newFrame.getHeaderValue("destination");
+            user = newFrame.getHeaderValue("user");
+            std::cout << "destination: " << dest << std::endl << "user: " << user << std::endl << std::endl;
+            event.printEvent();
+            //TODO: insert new event to allReports
         break;
 
-        //Receipt
         case Frame::receipt:
         recId = std::stoi(newFrame.getHeaderValue("receipt-id"));
 
@@ -225,8 +243,8 @@ void StompProtocol::processFrame(StompFrame newFrame) {
         }
         break;
 
-        //Connected
         case Frame::connected:
+            mConnectionHandler->setLoggedIn(1);
             std::cout << "Login successful" << std::endl;
         break;
 
@@ -277,7 +295,7 @@ vector<string> StompProtocol::report(const string& file){
     string dest = '/' + allEvents.team_a_name + '_' + allEvents.team_b_name;
 
     string head = "";
-    head += "user: \n";
+    head += "user: " + mConnectionHandler->getName() + '\n';
     head += "team a: " + allEvents.team_a_name + '\n';
     head += "team b: " + allEvents.team_b_name + '\n';
 

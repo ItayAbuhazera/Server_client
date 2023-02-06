@@ -9,10 +9,10 @@ using std::endl;
 using std::string;
 
 ConnectionHandler::ConnectionHandler(string host, short port) : host_(host), port_(port), io_service_(),
-                                                                socket_(io_service_), loggedIn(false), name("") {}
+                                                                socket_(io_service_), connected(false), loggedIn(false), name("") {}
 																
 ConnectionHandler::ConnectionHandler() : host_("0"), port_(0), io_service_(),
-										 socket_(io_service_), loggedIn(false), name(""){}
+										 socket_(io_service_), connected(false), loggedIn(false), name(""){}
 
 ConnectionHandler::~ConnectionHandler() {
 	close();
@@ -29,7 +29,7 @@ bool ConnectionHandler::connect() {
 		if (error)
 			throw boost::system::system_error(error);
 		else{
-			loggedIn = true;
+			connected = true;
 		}
 	}
 	catch (std::exception &e) {
@@ -116,8 +116,13 @@ void ConnectionHandler::close() {
 }
 
 void ConnectionHandler::disconnect(){
+	connected = false;
 	setLoggedIn(false);
     close();
+}
+
+bool ConnectionHandler::isConnected() const{
+	return connected;
 }
 
 bool ConnectionHandler::isLoggedIn() const{
@@ -138,5 +143,8 @@ void ConnectionHandler::setLoggedIn(bool b){
 
 void ConnectionHandler::setName(std::basic_string<char> &basicString) {
     name=basicString;
+}
 
+const std::string& ConnectionHandler::getName() const{
+	return name;
 }

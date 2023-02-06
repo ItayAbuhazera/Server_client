@@ -8,7 +8,7 @@
 #include "../include/event.h"
 
 enum Type {disconnect, subscribe, unsubscribe};
-enum Command {login, join, unjoin, logout, sendMessage, report};
+enum Command {login, join, unjoin, logout, sendMessage, report, summary};
 enum Frame {message, receipt, connected, error};
 
 // TODO: implement the STOMP protocol
@@ -33,9 +33,10 @@ private:
     int mDisconnectRec;
     int mReceiptCounter;
     int mSubId;
+    string user;
     ConnectionHandler* mConnectionHandler;
     map<string, int> commands;
     map<string, int> subscriptions;
     map<int, tuple<Type, int, string>> excpectedReciepts;
-    map<string, map<int, Event>> events;
+    map<tuple<string, string>, map<int, Event>> allReports; //(topic, user) tuple to a map of (time : event)
 };
