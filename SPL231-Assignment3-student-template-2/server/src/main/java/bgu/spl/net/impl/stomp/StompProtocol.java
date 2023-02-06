@@ -39,10 +39,6 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     @Override
     public synchronized StompFrame process(StompFrame newFrame, ConnectionHandler<StompFrame> ch) {
         int connectionId = connections.connect(ch);
-        //System.out.println(ch.hashCode() + " : " + connectionId);
-        //System.out.println(connections.hashCode());
-
-
         System.out.println('\n' + "=== Received ===" + '\n' + newFrame);
 
         switch (commandToInt.get(newFrame.getCommand())) {
