@@ -31,6 +31,7 @@ private:
     vector<string> tokenize(string source, char delimiter);
     string login(vector<string> msg);
     string logout();
+    void disconnect();
     string send(const string& dest, const string& body);
     vector<string> report(const string& file);
     string extractUser(const string& frameBody);
