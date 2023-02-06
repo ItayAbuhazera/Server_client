@@ -1,10 +1,10 @@
-#include <sstream>
-#include <vector>
-#include <map>
 #include "../include/StompProtocol.h"
-#include "../include/ConnectionHandler.h"
-#include "../include/StompFrame.h"
-#include "../include/event.h"
+#include <fstream>
+#include <iostream>
+//#include <map>
+//#include "../include/ConnectionHandler.h"
+//#include "../include/StompFrame.h"
+//#include "../include/event.h"
 
 using namespace std;
 
@@ -176,12 +176,7 @@ vector<string> StompProtocol::processKeyboard(string msg) {
         //Just a debug for now
         //TODO
         case Command::summary:
-            for (auto const &pair1: allReports){
-                for (auto const &pair2: allReports[make_tuple(get<0>(pair1.first),  get<1>(pair1.first))]){
-                    string k = "(" + get<0>(pair1.first) + ", " + get<1>(pair1.first) + ")";
-                    std::cout << k << " : (" << pair2.first << " : event )" << std::endl;
-                }
-            }
+            parseToFile(allReports[make_tuple(tokens[1], tokens[2])], tokens[3]);
             break;
 
         default:
@@ -273,6 +268,53 @@ string StompProtocol::extractUser(const string& frameBody){
     idx = body.find('\n');
     
     return body.substr(0, idx);
+}
+
+void StompProtocol::parseToFile(const map<int, Event*>& reports, const string& file){
+    Event* event;
+    
+    std::ofstream out_file(file, std::ios::trunc | std::ios::out);
+
+    if (!out_file.is_open()) {
+        std::cerr << "Failed to open file for writing" << std::endl;
+        return;
+    }
+
+    //Title
+    out_file << reports.begin()->second->get_team_a_name() + " vs " + reports.begin()->second->get_team_b_name() << "\n\n" << "Game stats:" << "\n";
+
+    //General
+    out_file << "General stats:" << '\n';
+    for (auto const &pair: reports){
+        event = pair.second;
+        for (auto const &update: event->get_game_updates())
+            out_file << update.first << " : " << update.second << "\n";
+    }
+
+    //Team A
+    out_file << "\n" << event->get_team_a_name() << " stats:" << '\n';
+    for (auto const &pair: reports){
+        event = pair.second;
+        for (auto const &update: event->get_team_a_updates())
+            out_file << update.first << " : " << update.second << "\n";
+    }
+
+    //Team B
+    out_file << "\n" << event->get_team_b_name() << " stats:" << '\n';
+    for (auto const &pair: reports){
+        event = pair.second;
+        for (auto const &update: event->get_team_b_updates())
+            out_file << update.first << " : " << update.second << "\n";
+    }
+
+    //Events
+    out_file << "\n" << "Game event rerports:" << '\n';
+    for (auto const &pair: reports){
+        event = pair.second;
+        out_file << pair.first << " - " << event->get_name() << '\n' << event->get_discription() << "\n\n";
+    }
+
+    out_file.close();
 }
 
 string StompProtocol::login(vector<string> msg) {

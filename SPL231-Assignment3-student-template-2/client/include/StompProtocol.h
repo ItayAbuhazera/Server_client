@@ -1,11 +1,15 @@
 #pragma once
 
+//#include <unordered_map>
 #include <map>
-#include <unordered_map>
+#include <vector>
 #include <string>
+#include <sstream>
+
 #include "../include/ConnectionHandler.h"
 #include "../include/StompFrame.h"
 #include "../include/event.h"
+#include "../include/json.hpp"
 
 enum Type {disconnect, subscribe, unsubscribe};
 enum Command {login, join, unjoin, logout, sendMessage, report, summary};
@@ -30,6 +34,7 @@ private:
     string send(const string& dest, const string& body);
     vector<string> report(const string& file);
     string extractUser(const string& frameBody);
+    void parseToFile(const map<int, Event*>& reports, const string& file);
 
     int mDisconnectRec;
     int mReceiptCounter;
