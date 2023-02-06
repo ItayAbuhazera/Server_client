@@ -129,11 +129,10 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     private void subscribe(int connectionId, StompFrame frame){
         if (frame.getHeaders().containsKey("destination")) {
             if (frame.getHeaders().containsKey("id")) {
-                if(!connections.subscribe(connectionId, Integer.parseInt(frame.getHeaderValue("id")), frame.getHeaderValue("destination")))
-                    error(connectionId, "Subscription failed", "An error accrued or you are already subscribed to this channel", frame);
-                else if(frame.getHeaders().containsKey("receipt-id"))
+                if(connections.subscribe(connectionId, Integer.parseInt(frame.getHeaderValue("id")), frame.getHeaderValue("destination")))
                     receipt(connectionId, frame);
-
+                else
+                    error(connectionId, "Subscription failed", "An error accrued or you are already subscribed to this channel", frame);
             } else {
                 error(connectionId, "Missing id", "", frame);
             }
@@ -144,10 +143,10 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
 
     private void unsubscribe(int connectionId, StompFrame frame){
         if (frame.getHeaders().containsKey("id")) {
-            if(!connections.unsubscribe(connectionId, Integer.parseInt(frame.getHeaderValue("id"))))
-                error(connectionId, "Invalid subscription id", "", frame);
-            if(frame.getHeaders().containsKey("receipt-id"))
+            if(connections.unsubscribe(connectionId, Integer.parseInt(frame.getHeaderValue("id"))))
                 receipt(connectionId, frame);
+            else
+                error(connectionId, "Invalid subscription id", "", frame);
         } else {
             error(connectionId, "Missing id", "", frame);
         }
@@ -156,7 +155,6 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     private void disconnect(int connectionId, StompFrame sourceFrame){
         if(sourceFrame.getHeaders().containsKey("receipt")){
             receipt(connectionId, sourceFrame);
-            connections.disconnect(connectionId);
         } else {
             error(connectionId, "Missing receipt", "", sourceFrame);
         }
@@ -171,7 +169,8 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         if(sourceFrame.getHeaders().containsKey("message-id"))
             sendHeaders.put("message-id", message);
         connections.send(connectionId, new StompFrame("ERROR", sendHeaders, body));
-        connections.disconnect(connectionId);
+        //connections.disconnect(connectionId);
+        shouldTerminate = true;
     }
 
     private void receipt(int connectionId, StompFrame sourceFrame){

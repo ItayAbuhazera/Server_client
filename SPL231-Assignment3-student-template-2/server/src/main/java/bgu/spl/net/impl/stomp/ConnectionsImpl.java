@@ -100,11 +100,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     @Override
-    public synchronized void disconnect(int connectionId) {
-
-    }
-
-    @Override
     public synchronized void unsubscribeAll(int connectionId){
     }
 

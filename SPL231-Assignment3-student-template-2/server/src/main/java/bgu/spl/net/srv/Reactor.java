@@ -6,11 +6,7 @@ import bgu.spl.net.impl.stomp.ConnectionsImpl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.ClosedSelectorException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 
@@ -88,7 +84,9 @@ public class Reactor<T> implements Server<T> {
             key.interestOps(ops);
         } else {
             selectorTasks.add(() -> {
-                key.interestOps(ops);
+                try{
+                    key.interestOps(ops);
+                } catch (Exception e) {}
             });
             selector.wakeup();
         }
