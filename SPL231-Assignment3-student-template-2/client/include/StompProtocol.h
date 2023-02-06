@@ -29,6 +29,7 @@ private:
     string logout();
     string send(const string& dest, const string& body);
     vector<string> report(const string& file);
+    string extractUser(const string& frameBody);
 
     int mDisconnectRec;
     int mReceiptCounter;
@@ -38,5 +39,5 @@ private:
     map<string, int> commands;
     map<string, int> subscriptions;
     map<int, tuple<Type, int, string>> excpectedReciepts;
-    map<tuple<string, string>, map<int, Event>> allReports; //(topic, user) tuple to a map of (time : event)
+    map<tuple<string, string>, map<int, Event*>> allReports; //(topic, user) tuple to a map of (time : event)
 };

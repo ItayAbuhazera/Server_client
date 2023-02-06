@@ -35,6 +35,7 @@ void StompProtocol::initCommands(){
     commands["logout"] = Command::logout;
     commands["send"] = Command::sendMessage;
     commands["report"] = Command::report;
+    commands["summary"] = Command::summary;
 
     //Server
     commands["MESSAGE"] = Frame::message;
@@ -105,6 +106,11 @@ bool StompProtocol::validateCommand(vector<string> command){
         case Command::report:
             expectedSize = 2;
             structure = "report {file}";
+            break;
+
+        case Command::summary:
+            expectedSize = 4;
+            structure = "summary {game_name} {user} {file}";
             break;
     }
 
@@ -194,19 +200,21 @@ void StompProtocol::processFrame(StompFrame newFrame) {
     //std::cout << "=== RECEIVED ===" << std::endl;
     //newFrame.printFrame(1);
     int recId;
-    Event event;
+    Event* event;
     string dest, user;
     switch(commands[newFrame.getCommand()]){
 
         case Frame::message:
             //newFrame.printFrame(1);
             //std::cout << std::endl << newFrame.getBody() << std::endl;
-            event = Event(newFrame.getBody());
+            event = new Event(newFrame.getBody());
             dest = newFrame.getHeaderValue("destination");
-            user = newFrame.getHeaderValue("user");
-            std::cout << "destination: " << dest << std::endl << "user: " << user << std::endl << std::endl;
-            event.printEvent();
+            user = extractUser(newFrame.getBody());
+
+            std::cout << std::endl << "destination: " << dest << std::endl << "user: " << user << std::endl << std::endl;
+            event->printEvent();
             //TODO: insert new event to allReports
+            allReports[make_tuple(dest, user)][event->get_time()] = event;
         break;
 
         case Frame::receipt:
@@ -254,6 +262,17 @@ void StompProtocol::processFrame(StompFrame newFrame) {
         break;
 
     }
+}
+
+string StompProtocol::extractUser(const string& frameBody){
+    string body(frameBody);
+    int idx;
+
+    idx = body.find("user:") + 6;
+    body = body.substr(idx);
+    idx = body.find('\n');
+    
+    return body.substr(0, idx);
 }
 
 string StompProtocol::login(vector<string> msg) {

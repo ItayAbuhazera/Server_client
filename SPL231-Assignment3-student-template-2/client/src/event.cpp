@@ -126,7 +126,7 @@ Event::Event(const std::string &frame_body) : team_a_name(""), team_b_name(""), 
         nl = msg.find("\n");
     }
 
-    idx = msg.find("description:") + 14;
+    idx = msg.find("description:") + 13;
     description = msg.substr(idx);
 }
 
@@ -180,7 +180,6 @@ names_and_events parseEventsFile(std::string json_path)
 }
 
 void Event::printEvent() const{
-    std::cout << std::endl;
     std::cout << "team a name: " << team_a_name << std::endl;
     std::cout << "team b name: " << team_b_name << std::endl;
     std::cout << "event name: " << name << std::endl;
@@ -188,15 +187,15 @@ void Event::printEvent() const{
 
     std::cout << std::endl << "general game updates: " << std::endl;
     for (auto const &pair: game_updates)
-        std::cout << pair.first << ":" << pair.second << std::endl;
+        std::cout << pair.first << ": " << pair.second << std::endl;
 
     std::cout << std::endl << "team a updates:" << std::endl;
     for (auto const &pair: team_a_updates)
-        std::cout << pair.first << ":" << pair.second << std::endl;
+        std::cout << pair.first << ": " << pair.second << std::endl;
 
     std::cout << std::endl << "team b updates:" << std::endl;
     for (auto const &pair: team_b_updates)
-        std::cout << pair.first << ":" << pair.second << std::endl;
+        std::cout << pair.first << ": " << pair.second << std::endl;
 
     std::cout << std::endl << "description:" << std::endl;
     std::cout << description << std::endl;

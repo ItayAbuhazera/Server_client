@@ -38,5 +38,5 @@ ip route show default
 
 login 192.168.48.1:7777 or or
 join /Germany_Japan
-report data/events1_partial.json
+report data/events1.json
 */
