@@ -279,41 +279,78 @@ void StompProtocol::parseToFile(const map<int, Event*>& reports, const string& f
         std::cerr << "Failed to open file for writing" << std::endl;
         return;
     }
-
+    std::map<string, string> updates; //a map that contain only the latest update of each game
     //Title
     out_file << reports.begin()->second->get_team_a_name() + " vs " + reports.begin()->second->get_team_b_name() << "\n\n" << "Game stats:" << "\n";
 
     //General
+    string header;
     out_file << "General stats:" << '\n';
-    for (auto const &pair: reports){
+    for (auto const &pair: reports) {
         event = pair.second;
-        for (auto const &update: event->get_game_updates())
-            out_file << update.first << " : " << update.second << "\n";
+        for (auto const &update: event->get_game_updates()) {
+            header = update.first;
+            if (updates.count(update.first) == 0) {
+                updates[header] = update.second;
+            } else {
+                if (header == "active") {
+                    if (update.second != updates[header])
+                        updates[header] = update.second;
+                } else if (header == "before halftime") {
+                    if (update.second != updates[header])
+                        updates[header] = update.second;
+                } else {
+                    updates[header] = update.second;
+                }
+            }
+        }
     }
+    for(auto const &update: updates){
+        out_file << update.first + ": " + update.second << '\n';
+    }
+    updates.clear();
 
     //Team A
     out_file << "\n" << event->get_team_a_name() << " stats:" << '\n';
-    for (auto const &pair: reports){
+    for (auto const &pair: reports) {
         event = pair.second;
-        for (auto const &update: event->get_team_a_updates())
-            out_file << update.first << " : " << update.second << "\n";
+        for (auto const &update: event->get_team_a_updates()) {
+            header = update.first;
+            if (updates.count(header) == 0) {
+                updates[header] = update.second;
+            } else {
+                if(update.second != updates[header])
+                    updates[header] = update.second;
+            }
+        }
     }
-
+    for(auto const &update: updates){
+        out_file << update.first + ": " + update.second << '\n';
+    }
+    updates.clear();
     //Team B
     out_file << "\n" << event->get_team_b_name() << " stats:" << '\n';
     for (auto const &pair: reports){
         event = pair.second;
-        for (auto const &update: event->get_team_b_updates())
-            out_file << update.first << " : " << update.second << "\n";
+        for (auto const &update: event->get_team_b_updates()){
+            header = update.first;
+            if (updates.count(header) == 0) {
+                updates[header] = update.second;
+            } else {
+                if(update.second != updates[header])
+                    updates[header] = update.second;
+            }
+        }
     }
-
+    for(auto const &update: updates){
+        out_file << update.first + ": " + update.second << '\n';
+    }
     //Events
-    out_file << "\n" << "Game event rerports:" << '\n';
+    out_file << "\n" << "Game event reports:" << '\n';
     for (auto const &pair: reports){
         event = pair.second;
         out_file << pair.first << " - " << event->get_name() << '\n' << event->get_discription() << "\n\n";
     }
-
     out_file.close();
 }
 
