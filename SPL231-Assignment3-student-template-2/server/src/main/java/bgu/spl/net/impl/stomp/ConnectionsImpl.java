@@ -65,9 +65,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
         subs.put(subId, channel);
         subscriptionsIds.put(connectionId, subs);
-
-        //subscriptionsIds.forEach((client, subMap) -> System.out.println(client + subMap.toString()));
-
         return true;
     }
 
@@ -78,9 +75,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
             return false;
         subs.remove(subId);
         subscriptionsIds.put(connectionId, subs);
-
-        //subscriptionsIds.forEach((client, subMap) -> System.out.println(client + subMap.toString()));
-
         return true;
     }
 
@@ -112,14 +106,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     @Override
     public synchronized void unsubscribeAll(int connectionId){
-        /*
-        if(SubscriberToChannels.get(connectionId) == null)
-            return;
-        else{
-            for (String channel: SubscriberToChannels.get(connectionId)) {
-                unsubscribe(connectionId, channel);
-            }
-        }*/
     }
 
     @Override
