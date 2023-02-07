@@ -166,7 +166,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     private void disconnect(int connectionId, StompFrame sourceFrame){
         if(sourceFrame.getHeaders().containsKey("receipt")){
             receipt(connectionId, sourceFrame);
-            connections.setActiveC(connectionId, false);
+            connections.setActive(connectionId, false);
         } else {
             error(connectionId, "Missing receipt", "", sourceFrame);
         }

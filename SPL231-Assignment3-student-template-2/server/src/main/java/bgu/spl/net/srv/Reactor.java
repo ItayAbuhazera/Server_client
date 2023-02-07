@@ -19,7 +19,7 @@ public class Reactor<T> implements Server<T> {
     private Selector selector;
     private Thread selectorThread;
     private final ConcurrentLinkedQueue<Runnable> selectorTasks = new ConcurrentLinkedQueue<>();
-    private ConnectionsImpl connections;
+    public ConnectionsImpl connections;
 
     public Reactor(
             int numThreads,

@@ -118,18 +118,32 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     public synchronized void register(String login, String passcode) {
-
         userNamePassword.put(login, passcode);
         isLogged.put(login, true);
     }
 
     public void setActive(String login, boolean b) {
-        isLogged.put(login, b);
+        try{
+            isLogged.put(login, b);
+        } catch (NullPointerException e) {}
     }
 
-    public void setActiveC(int connectionId, Boolean b) {
-        String loginName = connectionIdToUserName.get(connectionId);
-        isLogged.put(loginName, b);
+    public void setActive(int connectionId, boolean b) {
+        try {
+            String loginName = connectionIdToUserName.get(connectionId);
+            isLogged.put(loginName, b);
+        } catch (NullPointerException e) {}
+    }
+
+    public void setActive(ConnectionHandler<T> ch, boolean b) {
+        int id = -1;
+        for(int k : connections.keySet())
+            if(connections.get(k).hashCode() == ch.hashCode())
+                id = k;
+
+        if(id == -1)
+            return;
+        setActive(id, b);
     }
 
     public ConcurrentHashMap<String, Boolean> getIsLogged() {
