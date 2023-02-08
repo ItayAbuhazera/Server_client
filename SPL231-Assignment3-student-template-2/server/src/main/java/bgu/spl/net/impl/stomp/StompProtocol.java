@@ -7,12 +7,11 @@ import bgu.spl.net.srv.Connections;
 import java.util.Hashtable;
 
 public class StompProtocol implements StompMessagingProtocol<StompFrame> {
-    private ConnectionsImpl<StompFrame> connections;
+    private final ConnectionsImpl<StompFrame> connections;
     private static final Hashtable<String, Integer> commandToInt = new Hashtable<>();
 
     private boolean shouldTerminate;
     private static int msgId;
-    private static int nextConnectionId;
 
 
 
@@ -20,7 +19,6 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         connections = ConnectionsImpl.getInstance();
         shouldTerminate = false;
         msgId = -1;
-        nextConnectionId = 0;
         commandToInt.put("CONNECT", 1);
         commandToInt.put("SEND", 2);
         commandToInt.put("SUBSCRIBE", 3);
