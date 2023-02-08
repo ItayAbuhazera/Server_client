@@ -33,9 +33,15 @@ public class StompServer extends BaseServer {
     public static void main(String[] args) {
         int port = Integer.parseInt(args[0]);
         switch (args[1]) {
-            case "tpc" -> runTPC(port);
-            case "reactor" -> runReactor(port);
-            default -> System.out.println("Invalid argument");
+            case "tpc":
+                runTPC(port);
+                break;
+            case "reactor":
+                runReactor(port);
+                break;
+            default:
+                System.out.println("Invalid argument");
+                break;
         }
     }
 

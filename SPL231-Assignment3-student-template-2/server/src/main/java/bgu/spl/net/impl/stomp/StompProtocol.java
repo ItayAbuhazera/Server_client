@@ -44,35 +44,35 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         System.out.println('\n' + "=== Received ===" + '\n' + newFrame);
 
         switch (commandToInt.get(newFrame.getCommand())) {
-            case 1 -> {
                 //CONNECT
+            case 1:
                 connect(connectionId, newFrame);
-            }
+                break;
 
-            case 2 -> {
-                //SEND
+            //SEND
+            case 2:
                 send(connectionId, newFrame);
-            }
+                break;
 
-            case 3 -> {
-                //SUBSCRIBE
+            //SUBSCRIBE
+            case 3:
                 subscribe(connectionId, newFrame);
-            }
+                break;
 
-            case 4 -> {
-                //UNSUBSCRIBE
+            //UNSUBSCRIBE
+            case 4:
                 unsubscribe(connectionId, newFrame);
-            }
+                break;
 
-            case 5 -> {
-                //DISCONNECT
+            //DISCONNECT
+            case 5:
                 disconnect(connectionId, newFrame);
-            }
+                break;
 
             //Invalid command
-            default -> {
+            default:
                 error(connectionId, "Invalid frame", newFrame.getCommand(), newFrame);
-            }
+                break;
         }
         return null;
     }
