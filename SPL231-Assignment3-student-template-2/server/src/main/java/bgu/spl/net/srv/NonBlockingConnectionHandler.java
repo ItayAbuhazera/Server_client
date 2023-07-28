@@ -72,6 +72,7 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
 
     public void close() {
         try {
+            reactor.connections.setActive(this, false);
             chan.close();
         } catch (IOException ex) {
             ex.printStackTrace();

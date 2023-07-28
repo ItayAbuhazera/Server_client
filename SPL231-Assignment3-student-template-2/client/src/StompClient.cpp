@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 
     while(1){
         //Receive
-        if(ch->isLoggedIn()){
+        if(ch->isConnected()){
             std::string msg = "";
             if(ch->getFrameAscii(msg, '\0')){
                 StompFrame recFrame(msg);
@@ -35,5 +35,9 @@ int main(int argc, char *argv[]) {
 
 /*
 ip route show default
-login 172.24.144.1:7777 or or
+
+login 192.168.48.1:7777 or or
+join /Germany_Japan
+report data/events1.json
+summary /Germany_Japan or test
 */

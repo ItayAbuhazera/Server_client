@@ -3,10 +3,6 @@ package bgu.spl.net.impl.stomp;
 import bgu.spl.net.srv.ConnectionHandler;
 import bgu.spl.net.srv.Connections;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ConnectionsImpl<T> implements Connections<T> {
@@ -17,6 +13,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
     // ConnectionID : <SubId : Channel>
     private volatile ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, String>> subscriptionsIds;
 
+    private volatile ConcurrentHashMap<String, Boolean> isLogged;
+
+    private volatile ConcurrentHashMap<Integer, String> connectionIdToUserName;
+
     private static int nextId;
     private boolean shouldTerminate = false;
 
@@ -24,7 +24,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         this.subscriptionsIds = new ConcurrentHashMap<>();
         this.connections = new ConcurrentHashMap<>();
         this.userNamePassword = new ConcurrentHashMap<>();
-        nextId = 0;
+        this.nextId = 0;
     }
 
     public static ConnectionsImpl<StompFrame> getInstance(){
@@ -64,9 +64,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
             return false;
         subs.put(subId, channel);
         subscriptionsIds.put(connectionId, subs);
-
-        //subscriptionsIds.forEach((client, subMap) -> System.out.println(client + subMap.toString()));
-
         return true;
     }
 
@@ -77,9 +74,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
             return false;
         subs.remove(subId);
         subscriptionsIds.put(connectionId, subs);
-
-        //subscriptionsIds.forEach((client, subMap) -> System.out.println(client + subMap.toString()));
-
         return true;
     }
 
@@ -105,20 +99,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     @Override
-    public synchronized void disconnect(int connectionId) {
-
-    }
-
-    @Override
     public synchronized void unsubscribeAll(int connectionId){
-        /*
-        if(SubscriberToChannels.get(connectionId) == null)
-            return;
-        else{
-            for (String channel: SubscriberToChannels.get(connectionId)) {
-                unsubscribe(connectionId, channel);
-            }
-        }*/
     }
 
     @Override
@@ -135,7 +116,39 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     public synchronized void register(String login, String passcode) {
         userNamePassword.put(login, passcode);
+        isLogged.put(login, true);
     }
 
+    public void setActive(String login, boolean b) {
+        try{
+            isLogged.put(login, b);
+        } catch (NullPointerException e) {}
+    }
+
+    public void setActive(int connectionId, boolean b) {
+        try {
+            String loginName = connectionIdToUserName.get(connectionId);
+            isLogged.put(loginName, b);
+        } catch (NullPointerException e) {}
+    }
+
+    public void setActive(ConnectionHandler<T> ch, boolean b) {
+        int id = -1;
+        for(int k : connections.keySet())
+            if(connections.get(k).hashCode() == ch.hashCode())
+                id = k;
+
+        if(id == -1)
+            return;
+        setActive(id, b);
+    }
+
+    public ConcurrentHashMap<String, Boolean> getIsLogged() {
+        return isLogged;
+    }
+
+    public void setConnectionId(int connectionId, String loginName) {
+        connectionIdToUserName.put(connectionId, loginName);
+    }
 }
 

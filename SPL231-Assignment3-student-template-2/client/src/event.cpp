@@ -17,6 +17,8 @@ Event::Event(std::string team_a_name, std::string team_b_name, std::string name,
 {
 }
 
+Event::Event(): team_a_name(""), team_b_name(""), name(""), time(0), game_updates(), team_a_updates(), team_b_updates(), description("") {}
+
 Event::~Event()
 {
 }
@@ -63,6 +65,69 @@ const std::string &Event::get_discription() const
 
 Event::Event(const std::string &frame_body) : team_a_name(""), team_b_name(""), name(""), time(0), game_updates(), team_a_updates(), team_b_updates(), description("")
 {
+    std::string msg(frame_body);
+    std::string temp;
+    int idx, nl, seg1, seg2;
+    msg = msg.substr(msg.find("team a: "));
+
+    idx = msg.find("team a: ") + 8;
+    nl = msg.find('\n');
+    team_a_name = msg.substr(idx, nl - idx);
+    msg = msg.substr(nl + 1);
+
+    idx = msg.find("team b: ") + 8;
+    nl = msg.find('\n');
+    team_b_name = msg.substr(idx, nl - idx);
+    msg = msg.substr(nl + 1);
+
+    idx = msg.find("event name: ") + 12;
+    nl = msg.find('\n');
+    name = msg.substr(idx, nl - idx);
+    msg = msg.substr(nl + 1);
+
+    idx = msg.find("time: ") + 6;
+    nl = msg.find('\n');
+    time = stoi(msg.substr(idx, nl - idx));
+    msg = msg.substr(nl + 1);
+
+    seg1 = msg.find("general game updates:");
+    msg = msg.substr(seg1 + 22);
+    seg2 = msg.find("team a updates:");
+    nl = msg.find('\n');
+    while(nl < seg2){
+        idx = msg.find(": ") + 2;
+        game_updates[msg.substr(0, idx - 2)] = msg.substr(idx, nl - idx);
+        msg = msg.substr(nl + 1);
+        seg2 = msg.find("team a updates:");
+        nl = msg.find("\n");
+    }
+
+    seg1 = msg.find("team a updates:");
+    msg = msg.substr(seg1 + 16);
+    seg2 = msg.find("team b updates:");
+    nl = msg.find('\n');
+    while(nl < seg2){
+        idx = msg.find(": ") + 2;
+        team_a_updates[msg.substr(0, idx - 2)] = msg.substr(idx, nl - idx);
+        msg = msg.substr(nl + 1);
+        seg2 = msg.find("team b updates:");
+        nl = msg.find("\n");
+    }
+
+    seg1 = msg.find("team b updates:");;
+    msg = msg.substr(seg1 + 16);
+    seg2 = msg.find("description:");
+    nl = msg.find('\n');
+    while(nl < seg2){
+        idx = msg.find(": ") + 2;
+        team_b_updates[msg.substr(0, idx - 2)] = msg.substr(idx, nl - idx);
+        msg = msg.substr(nl + 1);
+        seg2 = msg.find("description:");
+        nl = msg.find("\n");
+    }
+
+    idx = msg.find("description:") + 13;
+    description = msg.substr(idx);
 }
 
 names_and_events parseEventsFile(std::string json_path)
@@ -112,4 +177,26 @@ names_and_events parseEventsFile(std::string json_path)
     names_and_events events_and_names{team_a_name, team_b_name, events};
 
     return events_and_names;
+}
+
+void Event::printEvent() const{
+    std::cout << "team a name: " << team_a_name << std::endl;
+    std::cout << "team b name: " << team_b_name << std::endl;
+    std::cout << "event name: " << name << std::endl;
+    std::cout << "time: " << time << std::endl;
+
+    std::cout << std::endl << "general game updates: " << std::endl;
+    for (auto const &pair: game_updates)
+        std::cout << pair.first << ": " << pair.second << std::endl;
+
+    std::cout << std::endl << "team a updates:" << std::endl;
+    for (auto const &pair: team_a_updates)
+        std::cout << pair.first << ": " << pair.second << std::endl;
+
+    std::cout << std::endl << "team b updates:" << std::endl;
+    for (auto const &pair: team_b_updates)
+        std::cout << pair.first << ": " << pair.second << std::endl;
+
+    std::cout << std::endl << "description:" << std::endl;
+    std::cout << description << std::endl;
 }

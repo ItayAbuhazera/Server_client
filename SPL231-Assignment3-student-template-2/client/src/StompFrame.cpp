@@ -37,10 +37,10 @@ const string& StompFrame::getBody() const{
 }
 
 void StompFrame::printFrame(bool includeHeaders) const {
-    std::cout << mCommand << std::endl;
+    std::cout << std::endl << mCommand << std::endl;
     if(includeHeaders)
         for (auto const &pair: mHeaders)
-            std::cout << pair.first << ":" << pair.second << std::endl;
+            std::cout << pair.first << " : " << pair.second << std::endl;
     std::cout << std::endl << mBody << std::endl << "\0" << std::endl;
 }
 
