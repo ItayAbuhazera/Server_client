@@ -37,13 +37,12 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     }
 
     @Override
-    public synchronized StompFrame process(StompFrame newFrame, ConnectionHandler<StompFrame> ch) {
+    public StompFrame process(StompFrame newFrame, ConnectionHandler<StompFrame> ch) {
         int connectionId = connections.connect(ch);
-        //System.out.println(ch.hashCode() + " : " + connectionId);
-        //System.out.println(connections.hashCode());
 
-
-        System.out.println('\n' + "=== Received ===" + '\n' + newFrame);
+        System.out.println("CH with id: " + connectionId);
+        System.out.println("=== Received ===");
+        System.out.println(newFrame);
 
         switch (commandToInt.get(newFrame.getCommand())) {
             case 1 -> {
@@ -87,6 +86,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
                             Hashtable<String, String> sendHeaders = new Hashtable<>();
                             sendHeaders.put("version", frame.getHeaderValue("accept-version"));
                             connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
+                            System.out.println(frame.getHeaderValue("login") + "connected");
 
                         } else {
                             error(connectionId, "Invalid login or password", "", frame);
@@ -97,6 +97,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
                             Hashtable<String, String> sendHeaders = new Hashtable<>();
                             sendHeaders.put("version", frame.getHeaderValue("accept-version"));
                             connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
+                            System.out.println(frame.getHeaderValue("login") + " registered");
                         }
             } else {
                 error(connectionId, "Invalid version", "", frame);
@@ -134,7 +135,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         if (frame.getHeaders().containsKey("destination")) {
             if (frame.getHeaders().containsKey("id")) {
                 if(!connections.subscribe(connectionId, Integer.parseInt(frame.getHeaderValue("id")), frame.getHeaderValue("destination")))
-                    error(connectionId, "Subscription failed", "An error accrued or you are already subscribed to this channel", frame);
+                    error(connectionId, "Subscription failed", "An error accured or you are already subscribed to this channel", frame);
                 else if(frame.getHeaders().containsKey("receipt-id"))
                     receipt(connectionId, frame);
 

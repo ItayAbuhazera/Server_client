@@ -2,19 +2,12 @@ cmake_minimum_required(VERSION 3.24)
 project(Server_client)
 
 set(CMAKE_CXX_STANDARD 14)
-
-include_directories(__MACOSX/SPL231-Assignment3-student-template-2/client/include)
 include_directories(SPL231-Assignment3-student-template-2/client/include)
+include_directories(D:/boost_1_81_0/include)
+link_directories(D:/boost_1_81_0/lib)
+
 
 add_executable(Server_client
-        __MACOSX/SPL231-Assignment3-student-template-2/client/include/._ConnectionHandler.h
-        __MACOSX/SPL231-Assignment3-student-template-2/client/include/._event.h
-        __MACOSX/SPL231-Assignment3-student-template-2/client/include/._json.hpp
-        __MACOSX/SPL231-Assignment3-student-template-2/client/include/._StompProtocol.h
-        __MACOSX/SPL231-Assignment3-student-template-2/client/src/._ConnectionHandler.cpp
-        __MACOSX/SPL231-Assignment3-student-template-2/client/src/._echoClient.cpp
-        __MACOSX/SPL231-Assignment3-student-template-2/client/src/._event.cpp
-        __MACOSX/SPL231-Assignment3-student-template-2/client/src/._StompClient.cpp
         SPL231-Assignment3-student-template-2/client/include/ConnectionHandler.h
         SPL231-Assignment3-student-template-2/client/include/event.h
         SPL231-Assignment3-student-template-2/client/include/json.hpp

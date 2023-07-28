@@ -49,80 +49,52 @@ cmake_ninja_workdir = D$:/Users/Itay/Projects/Server_client/cmake-build-debug/
 
 build cmake_object_order_depends_target_Server_client: phony || CMakeFiles/Server_client.dir
 
-build CMakeFiles/Server_client.dir/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._ConnectionHandler.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._ConnectionHandler.cpp || cmake_object_order_depends_target_Server_client
-  DEP_FILE = CMakeFiles\Server_client.dir\__MACOSX\SPL231-Assignment3-student-template-2\client\src\._ConnectionHandler.cpp.obj.d
-  FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
-  OBJECT_DIR = CMakeFiles\Server_client.dir
-  OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\__MACOSX\SPL231-Assignment3-student-template-2\client\src
-
-build CMakeFiles/Server_client.dir/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._echoClient.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._echoClient.cpp || cmake_object_order_depends_target_Server_client
-  DEP_FILE = CMakeFiles\Server_client.dir\__MACOSX\SPL231-Assignment3-student-template-2\client\src\._echoClient.cpp.obj.d
-  FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
-  OBJECT_DIR = CMakeFiles\Server_client.dir
-  OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\__MACOSX\SPL231-Assignment3-student-template-2\client\src
-
-build CMakeFiles/Server_client.dir/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._event.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._event.cpp || cmake_object_order_depends_target_Server_client
-  DEP_FILE = CMakeFiles\Server_client.dir\__MACOSX\SPL231-Assignment3-student-template-2\client\src\._event.cpp.obj.d
-  FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
-  OBJECT_DIR = CMakeFiles\Server_client.dir
-  OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\__MACOSX\SPL231-Assignment3-student-template-2\client\src
-
-build CMakeFiles/Server_client.dir/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._StompClient.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._StompClient.cpp || cmake_object_order_depends_target_Server_client
-  DEP_FILE = CMakeFiles\Server_client.dir\__MACOSX\SPL231-Assignment3-student-template-2\client\src\._StompClient.cpp.obj.d
-  FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
-  OBJECT_DIR = CMakeFiles\Server_client.dir
-  OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\__MACOSX\SPL231-Assignment3-student-template-2\client\src
-
 build CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/ConnectionHandler.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/src/ConnectionHandler.cpp || cmake_object_order_depends_target_Server_client
   DEP_FILE = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src\ConnectionHandler.cpp.obj.d
   FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
+  INCLUDES = -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include -ID:/boost_1_81_0/include
   OBJECT_DIR = CMakeFiles\Server_client.dir
   OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src
 
 build CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/echoClient.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/src/echoClient.cpp || cmake_object_order_depends_target_Server_client
   DEP_FILE = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src\echoClient.cpp.obj.d
   FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
+  INCLUDES = -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include -ID:/boost_1_81_0/include
   OBJECT_DIR = CMakeFiles\Server_client.dir
   OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src
 
 build CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/event.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/src/event.cpp || cmake_object_order_depends_target_Server_client
   DEP_FILE = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src\event.cpp.obj.d
   FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
+  INCLUDES = -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include -ID:/boost_1_81_0/include
   OBJECT_DIR = CMakeFiles\Server_client.dir
   OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src
 
 build CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/KeyboardThread.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/src/KeyboardThread.cpp || cmake_object_order_depends_target_Server_client
   DEP_FILE = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src\KeyboardThread.cpp.obj.d
   FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
+  INCLUDES = -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include -ID:/boost_1_81_0/include
   OBJECT_DIR = CMakeFiles\Server_client.dir
   OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src
 
 build CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/StompClient.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/src/StompClient.cpp || cmake_object_order_depends_target_Server_client
   DEP_FILE = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src\StompClient.cpp.obj.d
   FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
+  INCLUDES = -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include -ID:/boost_1_81_0/include
   OBJECT_DIR = CMakeFiles\Server_client.dir
   OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src
 
 build CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/StompProtocol.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/src/StompProtocol.cpp || cmake_object_order_depends_target_Server_client
   DEP_FILE = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src\StompProtocol.cpp.obj.d
   FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
+  INCLUDES = -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include -ID:/boost_1_81_0/include
   OBJECT_DIR = CMakeFiles\Server_client.dir
   OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src
 
 build CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/StompFrame.cpp.obj: CXX_COMPILER__Server_client_Debug D$:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/src/StompFrame.cpp || cmake_object_order_depends_target_Server_client
   DEP_FILE = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src\StompFrame.cpp.obj.d
   FLAGS = -g -fdiagnostics-color=always -std=gnu++14
-  INCLUDES = -ID:/Users/Itay/Projects/Server_client/__MACOSX/SPL231-Assignment3-student-template-2/client/include -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include
+  INCLUDES = -ID:/Users/Itay/Projects/Server_client/SPL231-Assignment3-student-template-2/client/include -ID:/boost_1_81_0/include
   OBJECT_DIR = CMakeFiles\Server_client.dir
   OBJECT_FILE_DIR = CMakeFiles\Server_client.dir\SPL231-Assignment3-student-template-2\client\src
 
@@ -134,9 +106,10 @@ build CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/
 #############################################
 # Link the executable Server_client.exe
 
-build Server_client.exe: CXX_EXECUTABLE_LINKER__Server_client_Debug CMakeFiles/Server_client.dir/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._ConnectionHandler.cpp.obj CMakeFiles/Server_client.dir/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._echoClient.cpp.obj CMakeFiles/Server_client.dir/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._event.cpp.obj CMakeFiles/Server_client.dir/__MACOSX/SPL231-Assignment3-student-template-2/client/src/._StompClient.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/ConnectionHandler.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/echoClient.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/event.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/KeyboardThread.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/StompClient.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/StompProtocol.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/StompFrame.cpp.obj
+build Server_client.exe: CXX_EXECUTABLE_LINKER__Server_client_Debug CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/ConnectionHandler.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/echoClient.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/event.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/KeyboardThread.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/StompClient.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/StompProtocol.cpp.obj CMakeFiles/Server_client.dir/SPL231-Assignment3-student-template-2/client/src/StompFrame.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
+  LINK_PATH = -LD:/boost_1_81_0/lib
   OBJECT_DIR = CMakeFiles\Server_client.dir
   POST_BUILD = cd .
   PRE_LINK = cd .

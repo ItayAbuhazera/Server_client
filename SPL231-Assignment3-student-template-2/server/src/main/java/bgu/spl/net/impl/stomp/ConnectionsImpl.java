@@ -24,7 +24,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         this.subscriptionsIds = new ConcurrentHashMap<>();
         this.connections = new ConcurrentHashMap<>();
         this.userNamePassword = new ConcurrentHashMap<>();
-        this.nextId = 0;
+        nextId = 0;
     }
 
     public static ConnectionsImpl<StompFrame> getInstance(){
@@ -62,7 +62,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
         if(subs.containsValue(channel))
             return false;
-
         subs.put(subId, channel);
         subscriptionsIds.put(connectionId, subs);
 
