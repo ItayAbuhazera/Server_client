@@ -1,3 +1,0 @@
-D:/Users/Itay/Projects/Server_client/cmake-build-debug/CMakeFiles/Server_client.dir
-D:/Users/Itay/Projects/Server_client/cmake-build-debug/CMakeFiles/edit_cache.dir
-D:/Users/Itay/Projects/Server_client/cmake-build-debug/CMakeFiles/rebuild_cache.dir
