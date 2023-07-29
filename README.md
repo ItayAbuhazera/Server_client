@@ -164,7 +164,6 @@ The logout command removes the current user from all the topics.
 Once the client logs out (receives the [`RECEIPT`](#receipt_frame) frame from the server), it closes the socket.
 
 ### Client Frames
-<details>
 
 <a name="connect_frame"></a>
 **CONNECT**  
@@ -232,7 +231,6 @@ receipt :77
 * `receipt` - The recipt-id the client expects on the receipt returned by the server. This number is generated uniquely by the client.
 * The body of this frame should be empty
 
-</details>
 
 ## Server Side
 ### Overview
@@ -242,7 +240,6 @@ to any of the topics. Every message sent to a topic is being forwarded by the
 server to all clients registered to that topic.
 
 ### Server Frames
-<details>
 
 <a name="connected_frame"></a>
 **CONNECTED**  
@@ -310,6 +307,3 @@ receipt - id :32
 ```
 * `receipt-id` - it’s value matches the value specified by the frame that requested the receipt.
 * The frame body should be empty
-
- 
-</details>
