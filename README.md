@@ -8,18 +8,26 @@ The communication between the client and the server is based on STOMP frames. Th
 frame, interpets the command and processes it. Finally a reply frame is sent back to the client.
 
 ### Quick Start
-**Compile & Run Server**  
-You can run the server by compiling the Java project inside the [server](server) folder, and running it. Since it's written in Java
-the server can be compiled and run on both Linux and Windows. When running the server, it recieves a single
-command line argument that specifies whether to run in TPC or Reactor mode.
+**Run Server**  
+You can run the pre-compiled server by running [Server_Client.jar](server/Server_Client.jar).  
+The server takes two command line arguments, port and run mode (in that order):
+> java -jar -Server_Client.jar <port> <reactor|tpc>
+
+So for example this would run the server on port 7777 in reactor mode:
+```
+java -jar -Server_Client.jar 7777 reactor
+```
+You can also compile it yourself, by compiling the Java project inside the [server](server) folder.  
+Since it's written in Java, the server can be compiled and run on both Linux and Windows.
+
 
 **Run Client**  
 After the server is running, you can run the client:
 ```
 client/bin/Client
 ```
-Notice since the client was written in C++ and compiled for Linux, it can only run on Linux.  
-The source files for the client are found in [src](client/src) folder if you wish to recompile them.
+The client was written in C++ and compiled for Linux, so it can only run on Linux.  
+The source files for the client are found in [src](client/src) folder if you wish to recompile it by yourself.
 
 **Usage**  
 After both the server and client are running, you can connect and use the server using the [built-in commands](#commands).
