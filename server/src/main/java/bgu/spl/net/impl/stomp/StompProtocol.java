@@ -84,27 +84,21 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         String passcode = frame.getHeaderValue("passcode");
         if (frame.getHeaders().containsKey("accept-version")) {
             if (frame.getHeaderValue("accept-version").equals("1.2")) {
-                    if(connections.getUserNamePassword().containsKey(frame.getHeaderValue("login"))) {
-                        if (connections.getUserNamePassword().get(frame.getHeaders().get("login")).equals(frame.getHeaders().get("passcode"))) {
-                            Hashtable<String, String> sendHeaders = new Hashtable<>();
-                            sendHeaders.put("version", frame.getHeaderValue("accept-version"));
-                            connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
-
-                            } else {
-                                error(connectionId, "Invalid login or password", "", frame);
-                            }
-                        }else{
-                                error(connectionId, "User already logged in", "", frame);
-                            }
-                        }
-                        else{
-                            connections.register(loginName, passcode);
-                            connections.setConnectionId(connectionId, loginName);
-                            Hashtable<String, String> sendHeaders = new Hashtable<>();
-                            sendHeaders.put("version", frame.getHeaderValue("accept-version"));
-                            connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
-                            System.out.println(frame.getHeaderValue("login") + " registered");
-                        }
+                if(connections.getUserNamePassword().containsKey(frame.getHeaderValue("login"))) {
+                    if (connections.getUserNamePassword().get(frame.getHeaders().get("login")).equals(frame.getHeaders().get("passcode"))) {
+                        Hashtable<String, String> sendHeaders = new Hashtable<>();
+                        sendHeaders.put("version", frame.getHeaderValue("accept-version"));
+                        connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
+                    } else
+                        error(connectionId, "Invalid login or password", "", frame);
+                } else {
+                    connections.register(loginName, passcode);
+                    connections.setConnectionId(connectionId, loginName);
+                    Hashtable<String, String> sendHeaders = new Hashtable<>();
+                    sendHeaders.put("version", frame.getHeaderValue("accept-version"));
+                    connections.send(connectionId, new StompFrame("CONNECTED", sendHeaders, ""));
+                    System.out.println(frame.getHeaderValue("login") + " registered");
+                }
             } else {
                 error(connectionId, "Invalid version", "", frame);
             }

@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/SPL231-Assignment3-student-template-2.iml" filepath="$PROJECT_DIR$/.idea/SPL231-Assignment3-student-template-2.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/SPL231-Assignment3-student-template-22.iml" filepath="$PROJECT_DIR$/.idea/SPL231-Assignment3-student-template-22.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Server_Client.iml" filepath="$PROJECT_DIR$/.idea/Server_Client.iml" />
     </modules>
   </component>
 </project>
