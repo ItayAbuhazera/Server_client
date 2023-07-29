@@ -167,7 +167,7 @@ Once the client logs out (receives the [`RECEIPT`](#receipt_frame) frame from th
 <details>
 
 <a name="connect_frame"></a>
-**CONNECT**
+**CONNECT**  
 A STOMP client initiates the stream or TCP connection to the server by sending
 the `CONNECT` frame. The server may reply with a [`CONNECTED`](#connected_frame) frame or an [`ERROR`](#error_frame) frame.
 ```
