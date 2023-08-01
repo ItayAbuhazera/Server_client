@@ -144,10 +144,13 @@ vector<string> StompProtocol::processKeyboard(string msg) {
     if(!validateCommand(tokens))
         return out;
 
+    string newFrame = "";
     switch (commands.at(tokens[0])) {
         
         case Command::login:
-            out.push_back(login(tokens));
+            newFrame = login(tokens);
+            if (newFrame != "")
+                out.push_back(newFrame);
             break;
         
         case Command::join:
