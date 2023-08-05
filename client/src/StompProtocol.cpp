@@ -1,47 +1,20 @@
 #include "../include/StompProtocol.h"
+#include "../include/KeyboardThread.h"
 #include <fstream>
 #include <iostream>
-//#include <map>
-//#include "../include/ConnectionHandler.h"
-//#include "../include/StompFrame.h"
-//#include "../include/event.h"
+#include <map>
 
 using namespace std;
 
 StompProtocol::StompProtocol(ConnectionHandler& ch): 
-mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), user(), mConnectionHandler(&ch), commands(), subscriptions(), excpectedReciepts(), allReports()
-{
-    initCommands();
-}
+    mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), user(), mConnectionHandler(&ch),
+    commands(), subscriptions(), excpectedReciepts(), allReports() {}
 
 StompProtocol::StompProtocol(const StompProtocol& protocol): 
-mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), user(), mConnectionHandler(), commands(), subscriptions(), excpectedReciepts(), allReports()
-{
-    initCommands();
-}
+    mDisconnectRec(-1), mReceiptCounter(1), mSubId(0), user(), mConnectionHandler(),
+    commands(), subscriptions(), excpectedReciepts(), allReports() {}
 
-const StompProtocol& StompProtocol::operator=(const StompProtocol& protocol)
-{
-    initCommands();
-    return *(this);
-}
-
-void StompProtocol::initCommands(){
-    //Client
-    commands["login"] = Command::login;
-    commands["join"] = Command::join;
-    commands["exit"] = Command::unjoin;
-    commands["logout"] = Command::logout;
-    //commands["send"] = Command::sendMessage;
-    commands["report"] = Command::report;
-    commands["summary"] = Command::summary;
-
-    //Server
-    commands["MESSAGE"] = Frame::message;
-    commands["RECEIPT"] = Frame::receipt;
-    commands["CONNECTED"] = Frame::connected;
-    commands["ERROR"] = Frame::error;
-}
+const StompProtocol& StompProtocol::operator=(const StompProtocol& protocol) { return *(this); }
 
 vector<string> StompProtocol::tokenize(string source, char delimiter){
     vector<string> tokens;
@@ -55,134 +28,96 @@ vector<string> StompProtocol::tokenize(string source, char delimiter){
     return tokens;
 }
 
-bool StompProtocol::validateCommand(vector<string> command){
-    int unsigned expectedSize = 1;
-    string structure;
+ClientCommand StompProtocol::stringToCommand(string str){
+    static const std::unordered_map<std::string, ClientCommand> commandsMap = {
+            {"login", ClientCommand::login},
+            {"join", ClientCommand::join},
+            {"exit", ClientCommand::unjoin},
+            {"logout", ClientCommand::logout},
+            {"send", ClientCommand::sendMsg},
+            {"report", ClientCommand::report},
+            {"summary", ClientCommand::summary},
+        };
 
-    if(!commands.count(command[0])){
-        cout << "Invalid command type" << endl;
+    try{
+        return commandsMap.at(str);
+    } catch (const std::out_of_range& e) {
+        return ClientCommand::invalid;
+    }
+}
+
+bool StompProtocol::validate(vector<string> command, std::size_t expected, string structure){
+    if(command.size() != expected){
+        cout << "Invalid arguments. Expected: " << structure << endl;
         return false;
     }
-    
-    switch (commands[command[0]]) {
-
-        case Command::login:
-            expectedSize = 4;
-            structure = "login {host:port} {username} {password}";
-            break;
-
-        case Command::join:
-            expectedSize = 2;
-            structure = "join {game_name}";
-            if(subscriptions.count(command[1]) > 0){
-                cout << "Client is already subscribed to " << command[1]  << " with id " << subscriptions[command[1]] << endl;
-                return false;
-            }
-            break;
-
-        case Command::unjoin:
-            expectedSize = 2;
-            structure = "exit {game_name}";
-            if(!subscriptions.count(command[1])){
-                cout << "Invalid command. Client is not subscribed to " << command[1] << endl;
-                return false;
-            }
-            break;
-
-        case Command::logout:
-            expectedSize = 1;
-            structure = "logout";
-            break;
-
-        case Command::sendMessage:
-            expectedSize = 3;
-            structure = "send {destination} {message}";
-            if(command.size() < expectedSize){
-                cout << "Invalid arguments. Expected: " << structure << endl;
-                return false;
-            } else 
-                return true;
-            break;
-
-        case Command::report:
-            expectedSize = 2;
-            structure = "report {file}";
-            break;
-
-        case Command::summary:
-            expectedSize = 4;
-            structure = "summary {game_name} {user} {file}";
-            break;
-
-        default:
-            cout << "Invalid command type" << endl;
-            return false;
-            break;
-    }
-
-        if(command.size() != expectedSize){
-            cout << "Invalid arguments. Expected: " << structure << endl;
-            return false;
-        }
     return true;
 }
 
-vector<string> StompProtocol::processKeyboard(string msg) {
-    vector<string> out;
-    string s;
+bool StompProtocol::validateCommand(vector<string> command){
+    ClientCommand commandType = stringToCommand(command[0]);
+    switch (commandType){
+        case ClientCommand::login:
+            return validate(command, 4, "login {host:port} {username} {password}");
+        case ClientCommand::join:
+            return validate(command, 2, "join {game_name}");
+        case ClientCommand::unjoin:
+            return validate(command, 2, "exit {game_name}");
+        case ClientCommand::logout:
+            return validate(command, 1, "logout");
+        case ClientCommand::sendMsg:
+            return validate(command, 3, "send {destination} {message}");
+        case ClientCommand::report:
+            return validate(command, 2, "report {file}");
+        case ClientCommand::summary:
+            return validate(command, 4, "summary {game_name} {user} {file}");
+        default:
+            cout << "Invalid command type" << endl;
+            return false;
+    }
+}
 
-    if(msg == "")
-        return out;
+StompFrame* StompProtocol::processKeyboard(string input) { 
+    //Empty command
+    if(input == "")
+        return nullptr;
 
-    vector<string> tokens = tokenize(msg, ' ');
+    vector<string> tokens = tokenize(input, ' ');
 
+    //Not logged in
     if(!mConnectionHandler->isLoggedIn() && tokens[0] != "login"){
         std::cout << "login first" << std::endl;
-        return out;
+        return nullptr;
     }
 
+    //Invalid command
     if(!validateCommand(tokens))
-        return out;
+        return nullptr;
 
-    string newFrame = "";
-    switch (commands.at(tokens[0])) {
+    switch (stringToCommand(tokens[0])) {
         
-        case Command::login:
-            newFrame = login(tokens);
-            if (newFrame != "")
-                out.push_back(newFrame);
-            break;
+        case ClientCommand::login:
+            return login(tokens);
         
-        case Command::join:
-            out.push_back("SUBSCRIBE\nreceipt:" + to_string(mReceiptCounter) + "\nid:" + to_string(mSubId) + "\ndestination:" + tokens[1] + "\n\n\0");
-            excpectedReciepts[mReceiptCounter] = make_tuple(subscribe, mSubId, tokens[1]);
-            mSubId++;
-            mReceiptCounter++;
-            break;
+        case ClientCommand::join:
+            return subscribe(tokens[1]);
         
-        case Command::unjoin:
-            out.push_back("UNSUBSCRIBE\nreceipt:" + to_string(mReceiptCounter) + "\nid:" + to_string(subscriptions.at(tokens[1])) + "\n\n\0");
-            excpectedReciepts[mReceiptCounter] = make_tuple(unsubscribe, subscriptions.at(tokens[1]), tokens[1]);
-            mReceiptCounter++;
-            break;
+        case ClientCommand::unjoin:
+            return unsubscribe(tokens[1], subscriptions[tokens[1]]);
         
-        case Command::logout:
-            excpectedReciepts[mReceiptCounter] = make_tuple(Type::disconnect, 0, "");
-            out.push_back(logout());
-            break;
+        case ClientCommand::logout:
+            return logout();
         
-        case Command::sendMessage:
-            s = tokens[2];
-            for (int unsigned i=3; i<tokens.size(); i++)
-                s += " " + tokens[i];
-            out.push_back(send(tokens[1], s));
-            break;
+        case ClientCommand::sendMsg:
+            return send(tokens[1], tokens[2]);
 
-        case Command::report:
-            out = report(tokens[1]);
-            break;
+        case ClientCommand::report:
+            for (StompFrame* frame : report(tokens[1])){
+                KeyboardThread::sendFrame(frame);
+            }
+            return nullptr;
 
-        case Command::summary:
+        case ClientCommand::summary:
             if(allReports.count(make_tuple(tokens[1], tokens[2]))){
                 parseToFile(allReports[make_tuple(tokens[1], tokens[2])], tokens[3]);
                 std::cout << "Game reports summary saved to file" << std::endl;
@@ -190,86 +125,67 @@ vector<string> StompProtocol::processKeyboard(string msg) {
             else{
                 std::cout << "No relevant reports found" << std::endl;
             }
-            break;
-
+            return nullptr;
+            
         default:
-            std::cout << "Invalid frame code" << std::endl;
-            break;
+            std::cout << "Invalid command" << std::endl;
+            return nullptr;
     }
-
-    /*  DEBUG: print sent frame
-    if(out != ""){
-        std::cout << "=== SENT ===" << std::endl;
-        std::cout << out << std::endl;
-    } */
-    return out;
 }
 
 void StompProtocol::processFrame(StompFrame newFrame) {
-    int recId;
-    Event* event;
-    string dest, user;
-
-    /*  DEBUG: print received frame
+    /*  DEBUG : print received frame
     std::cout << "=== RECEIVED ===" << std::endl;
-    newFrame.printFrame(1);
+    std::cout << newFrame.toString() << std::endl;
     */
 
-    switch(commands[newFrame.getCommand()]){
+    switch(newFrame.getCommand()){
 
-        case Frame::message:
-            event = new Event(newFrame.getBody());
-            dest = newFrame.getHeaderValue("destination");
-            user = extractUser(newFrame.getBody());
-
-            std::cout << std::endl << "destination: " << dest << std::endl << "user: " << user << std::endl << std::endl;
-            event->printEvent();
-            allReports[make_tuple(dest, user)][event->get_time()] = event;
+        case FrameCommand::MESSAGE:
+            message(newFrame);
         break;
 
-        case Frame::receipt:
-        recId = std::stoi(newFrame.getHeaderValue("receipt-id"));
-        if (excpectedReciepts.count(recId)){
-            Type t = get<0>(excpectedReciepts[recId]);
-            int id = get<1>(excpectedReciepts[recId]);
-            string d = get<2>(excpectedReciepts[recId]);
-            switch(t){
-
-                case Type::disconnect:
-                    disconnect();
-                    break;
-                
-                case Type::subscribe:
-                    subscriptions[d] = id;
-                    std::cout << "Subscribed to " + d << std::endl;
-                    break;
-                
-                case Type::unsubscribe:
-                    subscriptions.erase(d);
-                    std::cout << "Unsubscribed from " + d << std::endl;
-                    break;
-
-                default:
-                    std::cout << "Unknown receipt received" + d << std::endl;
-                    break;
-            }
-
-            excpectedReciepts.erase(recId);
-        }
+        case FrameCommand::RECEIPT:
+            handleReceipt(newFrame);
         break;
 
-        case Frame::connected:
+        case FrameCommand::CONNECTED:
             mConnectionHandler->setLoggedIn(1);
             std::cout << "Login successful" << std::endl;
         break;
 
         //Error
         default:
-            newFrame.printFrame(1);
+            std::cout << newFrame.toString() << std::endl;
             disconnect();
         break;
 
     }
+}
+
+StompFrame* StompProtocol::subscribe(string destination){
+    //Create SUBSCRIBE frame
+    StompFrame* newFrame = new StompFrame(FrameCommand::SUBSCRIBE);
+    newFrame->addHeader("destination", destination.data());
+    newFrame->addHeader("id", std::to_string(mSubId).data());
+    newFrame->addHeader("receipt", std::to_string(mReceiptCounter).data());
+
+    //Update data
+    mSubId++;
+    mReceiptCounter++;
+    excpectedReciepts[mReceiptCounter] = make_tuple(ReceiptType::subscribe, mSubId, destination);
+    
+    return newFrame;
+}
+
+StompFrame* StompProtocol::unsubscribe(string destination, int subId){
+    //Create UNSUBSCRIBE frame
+    StompFrame* newFrame = new StompFrame(FrameCommand::UNSUBSCRIBE);
+    newFrame->addHeader("receipt", std::to_string(mReceiptCounter).data());
+    newFrame->addHeader("id", std::to_string(subId).data());
+
+    mReceiptCounter++;
+    return newFrame;
 }
 
 string StompProtocol::extractUser(const string& frameBody){
@@ -368,32 +284,38 @@ void StompProtocol::parseToFile(const map<int, Event*>& reports, const string& f
     out_file.close();
 }
 
-string StompProtocol::login(vector<string> msg) {
+StompFrame* StompProtocol::login(vector<string> msg) {
+    //init connection
     if(!mConnectionHandler -> isLoggedIn()) {
         string host = msg[1].substr(0, msg[1].find(":"));
         mConnectionHandler -> setHost(host);
         short port = std::stoi(msg[1].substr(msg[1].find(":") + 1, msg[1].length()));
         mConnectionHandler -> setPort(port);
+
         if (!mConnectionHandler -> connect()) {
             std::cerr << "Unable to connect " << host << ":" << port << std::endl;
-            return "";
+            return nullptr;
         } else {
+            // create CONNECT frame
             mConnectionHandler -> setName(msg[2]);
-            string out = "CONNECT";
-            out = out + "\n" + "accept-version:1.2" + "\n" + "host:stomp.cs.bgu.ac.il" + "\n" + "login:" + msg[2] + "\n" +
-                "passcode:" + msg[3] + "\n" + "\n";
-            return out;
+            StompFrame* newFrame = new StompFrame(FrameCommand::CONNECT);
+            newFrame -> addHeader("accept-version", "1.2");
+            newFrame -> addHeader("host", "stomp.cs.bgu.ac.il");
+            newFrame -> addHeader("login", msg[2].data());
+            newFrame -> addHeader("passcode", msg[3].data());
+            return newFrame;
         }
     }
     std::cout << "The client is already logged in, log out before trying again" << std::endl;
-    return "";
+    return nullptr;
 }
 
-string StompProtocol::logout() {
-    string out = "DISCONNECT\nreceipt:" + to_string(mReceiptCounter) + "\n\n\0";
+StompFrame* StompProtocol::logout() {
+    StompFrame* newFrame = new StompFrame(FrameCommand::DISCONNECT);
+    newFrame -> addHeader("receipt", std::to_string(mReceiptCounter).data());
     mDisconnectRec = mReceiptCounter;
     mReceiptCounter++;
-    return out;
+    return newFrame;
 }
 
 void StompProtocol::disconnect(){
@@ -403,22 +325,70 @@ void StompProtocol::disconnect(){
     std::cout << "Disconnected" << std::endl;
 }
 
-string StompProtocol::send(const string& destination, const string& body){
-    return "SEND\ndestination:" + destination + "\n\n" + body + "\n\0";
+StompFrame* StompProtocol::send(const string& destination, const string& body){
+    StompFrame* newFrame = new StompFrame(FrameCommand::SEND);
+    newFrame->addHeader("destination", destination.data());
+    newFrame->addHeader("user", mConnectionHandler->getName().data());
+    newFrame->setBody(body.data());
+    return newFrame;
 }
 
-vector<string> StompProtocol::report(const string& file){
-    vector<string> out;
+void StompProtocol::message(const StompFrame& frame){
+    //Save event
+    Event* event = new Event(frame.getBody());
+    string dest = frame.getHeaderValue("destination");
+    string user = extractUser(frame.getBody());
+    allReports[make_tuple(dest, user)][event->get_time()] = event;
+
+    //Print event
+    std::cout << std::endl << "destination: " << dest << std::endl << "user: " << user << std::endl << std::endl;
+    event->printEvent();
+}
+
+void StompProtocol::handleReceipt(const StompFrame& frame){
+    int recId = std::stoi(frame.getHeaderValue("receipt-id"));
+        if (excpectedReciepts.count(recId)){
+            ReceiptType t = get<0>(excpectedReciepts[recId]);
+            int id = get<1>(excpectedReciepts[recId]);
+            string d = get<2>(excpectedReciepts[recId]);
+            switch(t){
+                case ReceiptType::disconnect:
+                    disconnect();
+                    break;
+                
+                case ReceiptType::subscribe:
+                    subscriptions[d] = id;
+                    std::cout << "Subscribed to " + d << std::endl;
+                    break;
+                
+                case ReceiptType::unsubscribe:
+                    subscriptions.erase(d);
+                    std::cout << "Unsubscribed from " + d << std::endl;
+                    break;
+
+                default:
+                    std::cout << "Unknown receipt received" + d << std::endl;
+                    break;
+            }
+            excpectedReciepts.erase(recId);
+        }
+}
+
+vector<StompFrame*> StompProtocol::report(const string& file){
+    vector<StompFrame*> out;
     names_and_events allEvents = parseEventsFile(file);
 
     string dest = '/' + allEvents.team_a_name + '_' + allEvents.team_b_name;
 
-    string head = "";
-    head += "user: " + mConnectionHandler->getName() + '\n';
-    head += "team a: " + allEvents.team_a_name + '\n';
-    head += "team b: " + allEvents.team_b_name + '\n';
-
     for (Event event : allEvents.events){
+        //Create SEND frame
+        StompFrame* frame = new StompFrame(FrameCommand::SEND);
+        frame->addHeader("destination", dest.data());
+        frame->addHeader("user", mConnectionHandler->getName().data());
+        frame->addHeader("team a", allEvents.team_a_name.data());
+        frame->addHeader("team b", allEvents.team_b_name.data());
+
+        //Create body
         string body = "";
         body += "event name: " + event.get_name() + '\n';
         body += "time: " + to_string(event.get_time()) + '\n';
@@ -441,7 +411,8 @@ vector<string> StompProtocol::report(const string& file){
         body += "description:\n";
         body += event.get_discription();
 
-        out.push_back(send(dest, head + body));
+        frame->setBody(body.data());
+        out.push_back(frame);
     }
     return out;
 }

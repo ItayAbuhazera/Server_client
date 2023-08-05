@@ -9,10 +9,10 @@ using std::endl;
 using std::string;
 
 ConnectionHandler::ConnectionHandler(string host, short port) : host_(host), port_(port), io_service_(),
-                                                                socket_(io_service_), connected(false), loggedIn(false), name("") {}
+	socket_(io_service_), connected(false), loggedIn(false), name("") {}
 																
 ConnectionHandler::ConnectionHandler() : host_("0"), port_(0), io_service_(),
-										 socket_(io_service_), connected(false), loggedIn(false), name(""){}
+	socket_(io_service_), connected(false), loggedIn(false), name("") {}
 
 ConnectionHandler::~ConnectionHandler() {
 	close();
@@ -106,9 +106,15 @@ bool ConnectionHandler::sendFrameAscii(const std::string &frame, char delimiter)
 	return sendBytes(&delimiter, 1);
 }
 
+bool ConnectionHandler::sendFrame(const StompFrame& frame) {
+	std::string str = frame.toString();
+	return sendFrameAscii(str, '\0');
+}
+
 // Close down the connection properly.
 void ConnectionHandler::close() {
 	try {
+		
 		socket_.close();
 	} catch (...) {
 		std::cout << "closing failed: connection already closed" << std::endl;
