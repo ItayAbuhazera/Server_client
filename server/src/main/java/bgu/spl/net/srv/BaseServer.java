@@ -9,12 +9,12 @@ import java.util.function.Supplier;
 
 public abstract class BaseServer<T> implements Server<T> {
 
-    private final int port;
-    private final Supplier<MessagingProtocol<T>> protocolFactory;
-    private final Supplier<MessageEncoderDecoder<T>> encdecFactory;
-    private ServerSocket sock;
+    protected final int port;
+    protected final Supplier<MessagingProtocol<T>> protocolFactory;
+    protected final Supplier<MessageEncoderDecoder<T>> encdecFactory;
+    protected ServerSocket sock;
 
-    private int nextId;
+    protected int nextId;
 
 
     public BaseServer(

@@ -24,17 +24,19 @@ public class ConnectionsImpl<T> implements Connections<T> {
         this.subscriptionsIds = new ConcurrentHashMap<>();
         this.connections = new ConcurrentHashMap<>();
         this.userNamePassword = new ConcurrentHashMap<>();
+        this.isLogged = new ConcurrentHashMap<>();
+        this.connectionIdToUserName = new ConcurrentHashMap<>();
         this.nextId = 0;
     }
 
     public static ConnectionsImpl<StompFrame> getInstance(){
         if(instance == null)
             instance = new ConnectionsImpl<StompFrame>();
-
         return instance;
     }
 
-    public int getSubId(int connectionId, String channel){
+    @Override
+    public synchronized int getSubId(int connectionId, String channel){
         ConcurrentHashMap<Integer, String> subs = subscriptionsIds.get(connectionId);
 
         if(subs == null)
@@ -47,10 +49,14 @@ public class ConnectionsImpl<T> implements Connections<T> {
         return -1;
     }
 
+    @Override
+    public synchronized boolean checkLogin(String login){
+        return userNamePassword.containsKey(login);
+    }
 
     @Override
-    public ConcurrentHashMap<String, String> getUserNamePassword() {
-        return userNamePassword;
+    public synchronized boolean checkPassword(String login, String passcode){
+        return userNamePassword.get(login).equals(passcode);
     }
 
     @Override
@@ -77,8 +83,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         return true;
     }
 
-    @Override
-    public synchronized boolean send(int connectionId, T msg) {
+    private synchronized boolean send(int connectionId, T msg) {
         ConnectionHandler<T> client = connections.get(connectionId);
         System.out.println('\n' + "=== Sent ===" + '\n' + msg);
         if(client != null)
@@ -99,10 +104,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     @Override
-    public synchronized void unsubscribeAll(int connectionId){
-    }
-
-    @Override
     public synchronized int connect(ConnectionHandler<T> ch) {
         for (Integer key : connections.keySet()) {
             ConnectionHandler<T> value = connections.get(key);
@@ -117,12 +118,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public synchronized void register(String login, String passcode) {
         userNamePassword.put(login, passcode);
         isLogged.put(login, true);
-    }
-
-    public void setActive(String login, boolean b) {
-        try{
-            isLogged.put(login, b);
-        } catch (NullPointerException e) {}
     }
 
     public void setActive(int connectionId, boolean b) {
@@ -141,14 +136,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if(id == -1)
             return;
         setActive(id, b);
-    }
-
-    public ConcurrentHashMap<String, Boolean> getIsLogged() {
-        return isLogged;
-    }
-
-    public void setConnectionId(int connectionId, String loginName) {
-        connectionIdToUserName.put(connectionId, loginName);
     }
 }
 
