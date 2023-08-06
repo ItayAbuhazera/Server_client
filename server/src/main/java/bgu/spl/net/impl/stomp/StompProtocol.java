@@ -57,7 +57,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
         String receiptId = newFrame.getHeaderValue("receipt");
         String destination = newFrame.getHeaderValue("destination");
         int subId = connections.getSubId(connectionId, destination);
-        System.out.println('\n' + "=== Received ===" + '\n' + newFrame + '\n');
+        System.out.println('\n' + "=== Received ===" + '\n' + newFrame + '\n' + "================" + '\n');
 
         //Handle incoming frame
         switch (newFrame.getCommand()) {
@@ -70,6 +70,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
                 String body = newFrame.getBody();
                 return send(destination, subId, body, receiptId);
             case SUBSCRIBE:
+                subId = Integer.parseInt(newFrame.getHeaderValue("id"));
                 return subscribe(connectionId, destination, subId, receiptId);
             case UNSUBSCRIBE:
                 return unsubscribe(connectionId, subId, receiptId);

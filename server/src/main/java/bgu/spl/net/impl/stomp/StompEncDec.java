@@ -23,7 +23,7 @@ public class StompEncDec implements MessageEncoderDecoder<StompFrame> {
 
     @Override
     public byte[] encode(StompFrame message) {
-        return (message.toString()).getBytes(); //uses utf8 by default
+        return (message.toString() + '\u0000').getBytes(); //uses utf8 by default
     }
 
     private void pushByte(byte nextByte) {

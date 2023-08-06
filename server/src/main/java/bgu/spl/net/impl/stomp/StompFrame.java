@@ -45,7 +45,7 @@ public class StompFrame {
             sb.append("\n");
         }
 
-        return command + "\n" + sb.toString() + "\n" + body + "\n" + "\u0000";
+        return command + "\n" + sb.toString() + "\n" + body + "\n";
     }
 
     public String getHeaderValue(String header){
