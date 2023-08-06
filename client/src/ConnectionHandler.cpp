@@ -31,12 +31,11 @@ bool ConnectionHandler::connect() {
 		else{
 			connected = true;
 		}
-	}
-	catch (std::exception &e) {
+	} catch (std::exception &e) {
 		std::cerr << "Connection failed (Error: " << e.what() << ')' << std::endl;
 		return false;
 	}
-	std::cout << "Connected" << std::endl;
+	std::cout << "Connected to host" << std::endl;
 	return true;
 }
 

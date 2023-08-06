@@ -42,14 +42,14 @@ void KeyboardThread::run() {
     while(1) {
         const short bufferSize = 1024;
         char buffer[bufferSize];
-        std::cin.getline(buffer, bufferSize);
-        std::string line(buffer);
-        //StompFrame* frame = mProtocol->processKeyboard(line);
 
         //Send all frames in queue
         while(!sendQueue.empty() && mConnectionHandler->isConnected()) {
             StompFrame* frame = sendQueue.front();
             if (frame != nullptr) {
+                // DEBUG : Print sent frame
+                std::cout << std::endl << "=== SENT ===" << std::endl << frame->toString() << std::endl << "============" << std::endl;
+                
                 mConnectionHandler->sendFrame(*frame);
                 delete(frame);
             }
@@ -57,6 +57,8 @@ void KeyboardThread::run() {
         }
 
         //Proccess keyboard
+        std::cin.getline(buffer, bufferSize);
+        std::string line(buffer);
         StompFrame* frame = mProtocol->processKeyboard(line);
         if (frame != nullptr && mConnectionHandler->isConnected()) {
             sendQueue.push(frame);

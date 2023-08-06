@@ -85,8 +85,9 @@ StompFrame* StompProtocol::processKeyboard(string input) {
     vector<string> tokens = tokenize(input, ' ');
 
     //Not logged in
-    if(!mConnectionHandler->isLoggedIn() && tokens[0] != "login"){
-        std::cout << "login first" << std::endl;
+    if(mConnectionHandler->isLoggedIn() == false && tokens[0] != "login"){
+        std::cout << mConnectionHandler->isLoggedIn() << std::endl;
+        std::cout << "log in first" << std::endl;
         return nullptr;
     }
 
@@ -135,9 +136,8 @@ StompFrame* StompProtocol::processKeyboard(string input) {
 
 void StompProtocol::processFrame(StompFrame newFrame) {
     /*  DEBUG : print received frame
-    std::cout << "=== RECEIVED ===" << std::endl;
-    std::cout << newFrame.toString() << std::endl;
     */
+    std::cout << "=== RECEIVED ===" << std::endl << newFrame.toString() << std::endl << "================" << std::endl;
 
     switch(newFrame.getCommand()){
 
@@ -292,12 +292,17 @@ StompFrame* StompProtocol::login(vector<string> msg) {
         short port = std::stoi(msg[1].substr(msg[1].find(":") + 1, msg[1].length()));
         mConnectionHandler -> setPort(port);
 
+        //Error connecting
         if (!mConnectionHandler -> connect()) {
             std::cerr << "Unable to connect " << host << ":" << port << std::endl;
             return nullptr;
+
+        //Connected
         } else {
-            // create CONNECT frame
+            std::cout << "Logging in" << std::endl;
             mConnectionHandler -> setName(msg[2]);
+
+            // create CONNECT frame
             StompFrame* newFrame = new StompFrame(FrameCommand::CONNECT);
             newFrame -> addHeader("accept-version", "1.2");
             newFrame -> addHeader("host", "stomp.cs.bgu.ac.il");

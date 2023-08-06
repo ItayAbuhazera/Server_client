@@ -49,7 +49,7 @@ string StompFrame::toString() const {
     string str = commandToString(mCommand) + "\n";
     for (auto const &pair: mHeaders)
         str += pair.first + ":" + pair.second + "\n";
-    str += "\n" + mBody + "\n" + '\0';
+    str += "\n" + mBody + "\n";
     return str;
 }
 
