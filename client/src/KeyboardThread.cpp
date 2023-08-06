@@ -4,30 +4,64 @@
 #include <vector>
 class ConnectionHandler;
 
-KeyboardThread::KeyboardThread(ConnectionHandler &ch, StompProtocol &protocol): mConnectionHandler(&ch),mProtocol(&protocol) {}
+std::queue<StompFrame*> KeyboardThread::sendQueue;
 
-KeyboardThread::KeyboardThread(const KeyboardThread &kt): mConnectionHandler(kt.mConnectionHandler), mProtocol(kt.mProtocol) {}
+KeyboardThread::KeyboardThread(ConnectionHandler &ch, StompProtocol &protocol):
+    mConnectionHandler(&ch), mProtocol(&protocol) {}
+
+KeyboardThread::KeyboardThread(const KeyboardThread &kt):
+    mConnectionHandler(kt.mConnectionHandler), mProtocol(kt.mProtocol) {}
 
 KeyboardThread& KeyboardThread::operator=(const KeyboardThread &kt){
     mConnectionHandler = kt.mConnectionHandler;
     mProtocol = kt.mProtocol;
+    sendQueue = kt.sendQueue;
     return  *this;
 }
+
 KeyboardThread::~KeyboardThread() {
     delete(mConnectionHandler);
     delete(mProtocol);
+    clearSendQueue();
+}
+
+void KeyboardThread::clearSendQueue(){
+    while (!sendQueue.empty()) {
+        if (sendQueue.front() != nullptr)
+            delete(sendQueue.front());
+        sendQueue.pop();
+    }
+}
+
+void KeyboardThread::sendFrame(StompFrame* frame){
+    if (frame != nullptr)
+        sendQueue.push(frame);
 }
 
 void KeyboardThread::run() {
     while(1) {
         const short bufferSize = 1024;
         char buffer[bufferSize];
+
+        //Send all frames in queue
+        while(!sendQueue.empty() && mConnectionHandler->isConnected()) {
+            StompFrame* frame = sendQueue.front();
+            if (frame != nullptr) {
+                // DEBUG : Print sent frame
+                std::cout << std::endl << "=== SENT ===" << std::endl << frame->toString() << std::endl << "============" << std::endl;
+                
+                mConnectionHandler->sendFrame(*frame);
+                delete(frame);
+            }
+            sendQueue.pop();
+        }
+
+        //Proccess keyboard
         std::cin.getline(buffer, bufferSize);
         std::string line(buffer);
-        vector<std::string> out = mProtocol->processKeyboard(line);
-        if(out.size() > 0 && mConnectionHandler->isConnected()) {
-            for (std::string s : out)
-                mConnectionHandler -> sendFrameAscii(s, '\0');
+        StompFrame* frame = mProtocol->processKeyboard(line);
+        if (frame != nullptr && mConnectionHandler->isConnected()) {
+            sendQueue.push(frame);
         }
     }
 }

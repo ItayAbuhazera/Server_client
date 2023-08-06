@@ -3,6 +3,8 @@
 #include <string>
 #include <iostream>
 #include <boost/asio.hpp>
+#include <queue>
+#include "StompFrame.h"
 
 using boost::asio::ip::tcp;
 
@@ -41,21 +43,25 @@ public:
 	// Returns false in case connection is closed before all the data is sent.
 	bool sendFrameAscii(const std::string &frame, char delimiter);
 
+	// Converts a frame to string and sends it using sendFrameAscii
+	// Returns false in case connection is closed before all the data is sent.
+	bool sendFrame(const StompFrame& frame);
+
 	// Close down the connection properly.
 	void close();
 
-	// check if user is logged in
+	// Check if user is logged in
 	bool isLoggedIn() const;
 
+	// Check if socket is connected
 	bool isConnected() const;
 
-	// set port
+	// Disconnects from the server
+	void disconnect();
+
 	void setPort(short p);
 
-	// set host
 	void setHost(std::string h);
-
-	void disconnect();
 
     void setLoggedIn(bool b);
 
@@ -72,5 +78,4 @@ private:
 	bool connected;
 	bool loggedIn;
     std::string name;
-
-}; //class ConnectionHandler
+};

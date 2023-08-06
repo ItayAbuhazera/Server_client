@@ -2,8 +2,7 @@
 
 using namespace std;
 
-
-StompFrame::StompFrame(string msg): mCommand(msg.substr(0, msg.find('\n'))), mHeaders(), mBody() {
+StompFrame::StompFrame(string msg): mCommand(stringToCommand(msg.substr(0, msg.find('\n')))), mHeaders(), mBody("") {
     msg = msg.substr(msg.find('\n') + 1);
 
     //headers
@@ -22,9 +21,19 @@ StompFrame::StompFrame(string msg): mCommand(msg.substr(0, msg.find('\n'))), mHe
     mBody = msg.substr(msg.find("\n\n") + 2);
 }
 
-StompFrame::StompFrame(string command, map<string, string> headers, string body): mCommand{command}, mHeaders{headers}, mBody{body} {};
+StompFrame::StompFrame(FrameCommand command, map<string, string> headers, string body): mCommand{command}, mHeaders{headers}, mBody{body} {};
 
-const string& StompFrame::getCommand() const{
+StompFrame::StompFrame(FrameCommand command): mCommand{command}, mHeaders{}, mBody{} {};
+
+void StompFrame::addHeader(const string& header, const string& value){
+    mHeaders[header] = value;
+}
+
+void StompFrame::setBody(const string& body){
+    mBody = body;
+}
+
+const FrameCommand& StompFrame::getCommand() const{
     return mCommand;
 }
 
@@ -36,11 +45,50 @@ const string& StompFrame::getBody() const{
     return mBody;
 }
 
-void StompFrame::printFrame(bool includeHeaders) const {
-    std::cout << std::endl << mCommand << std::endl;
-    if(includeHeaders)
-        for (auto const &pair: mHeaders)
-            std::cout << pair.first << " : " << pair.second << std::endl;
-    std::cout << std::endl << mBody << std::endl << "\0" << std::endl;
+string StompFrame::toString() const {
+    string str = commandToString(mCommand) + "\n";
+    for (auto const &pair: mHeaders)
+        str += pair.first + ":" + pair.second + "\n";
+    str += "\n" + mBody + "\n";
+    return str;
 }
 
+FrameCommand StompFrame::stringToCommand(string str) {
+    static const std::unordered_map<std::string, FrameCommand> commandsMap = {
+        {"CONNECT", FrameCommand::CONNECT},
+        {"CONNECTED", FrameCommand::CONNECTED},
+        {"SUBSCRIBE", FrameCommand::SUBSCRIBE},
+        {"UNSUBSCRIBE", FrameCommand::UNSUBSCRIBE},
+        {"SEND", FrameCommand::SEND},
+        {"MESSAGE", FrameCommand::MESSAGE},
+        {"ERROR", FrameCommand::ERROR},
+        {"DISCONNECT", FrameCommand::DISCONNECT},
+    };
+
+    if (commandsMap.find(str) == commandsMap.end())
+        throw std::invalid_argument("Invalid FrameCommand string");
+    return commandsMap.at(str);
+}
+
+string StompFrame::commandToString(FrameCommand command) {
+    switch (command) {
+        case FrameCommand::CONNECT:
+            return "CONNECT";
+        case FrameCommand::CONNECTED:
+            return "CONNECTED";
+        case FrameCommand::SUBSCRIBE:
+            return "SUBSCRIBE";
+        case FrameCommand::UNSUBSCRIBE:
+            return "UNSUBSCRIBE";
+        case FrameCommand::SEND:
+            return "SEND";
+        case FrameCommand::MESSAGE:
+            return "MESSAGE";
+        case FrameCommand::ERROR:
+            return "ERROR";
+        case FrameCommand::DISCONNECT:
+            return "DISCONNECT";
+        default:
+            throw std::invalid_argument("Invalid FrameCommand");
+    }
+}

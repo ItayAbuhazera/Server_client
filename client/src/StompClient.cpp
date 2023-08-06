@@ -13,8 +13,8 @@ int main(int argc, char *argv[]) {
     KeyboardThread  kbThread(*ch, *stompProtocol);
     std::thread thread(&KeyboardThread::run, &kbThread);
 
+    //Receive
     while(1){
-        //Receive
         if(ch->isConnected()){
             std::string msg = "";
             if(ch->getFrameAscii(msg, '\0')){
@@ -24,6 +24,8 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+
+    //Exit Client
     ch->setLoggedIn(false);
     thread.join();
     ch->close();
@@ -36,7 +38,7 @@ int main(int argc, char *argv[]) {
 /*
 ip route show default
 
-login 172.21.96.1:7777 or or
+login 172.28.0.1:7777 or or
 join /Germany_Japan
 report data/events1.json
 summary /Germany_Japan or test
