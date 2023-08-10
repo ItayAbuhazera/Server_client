@@ -2,9 +2,8 @@
 Our project involved creating a messaging system using the STOMP (Simple Text Oriented Messaging Protocol) protocol. We implemented a server-side application in Java and a client-side application in C++ to facilitate real-time communication between multiple clients.
 
 ## Project Goals
-* Experience with socket programming and network communication in Java
-* Familiarity with socket programming in C++ for creating a networked client application
-* Practice multithreading and concurrent programming in both Java and C++
+* Experience with socket programming and network communication in Java and C++
+* Practice multithreading and concurrent programming in Java and C++
 * Knowledge of integrating applications written in different languages (Java and C++)
 * Practice handling data serialization and deserialization across different platforms
 * Experience working on a large-scale project where not all code is written by us
