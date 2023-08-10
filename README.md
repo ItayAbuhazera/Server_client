@@ -12,9 +12,9 @@ Our project involved creating a messaging system using the STOMP (Simple Text Or
 
 ## Table of Contents
 * [Overview](#overview)
-* [Quick Start](#quick-start)
-* [Game Events](#game-events)
-* [STOMP Frame Format](#stomp-frame-format)
+  - [Quick Start](#quick-start)
+  - [Game Events](#game-events)
+  - [STOMP Frame Format](#stomp-frame-format)
 * [Client Side](#client-side)
   - [Client Overview](#client-overview)
   - [Client Commands](#client-commands)
@@ -23,7 +23,9 @@ Our project involved creating a messaging system using the STOMP (Simple Text Or
   - [Server Overview](#server-overview)
   - [Server Frames](#server-frames)
 
-### Overview
+## Overview
+
+### Prologue
 The world cup is upon us, and you want to stay updated. Thus, we implemented a ”community-led” world cup update subscription
 service. Users can subscribe to a game channel and report and receive reports
 about the game to and from the other subscribed users.
