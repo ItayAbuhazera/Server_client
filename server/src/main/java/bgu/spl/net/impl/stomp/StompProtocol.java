@@ -3,8 +3,6 @@ package bgu.spl.net.impl.stomp;
 import bgu.spl.net.api.StompMessagingProtocol;
 import bgu.spl.net.srv.ConnectionHandler;
 
-import java.util.Hashtable;
-
 public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     private final ConnectionsImpl<StompFrame> connections;
     private boolean shouldTerminate;
@@ -22,23 +20,22 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     }
 
     private StompFrame createConnectedFrame(){
-        Hashtable<String, String> headers = new Hashtable<>();
-        headers.put("version", "1.2");
-        return new StompFrame(FrameCommands.CONNECTED, headers, "");
+        StompFrame connectedFrame = new StompFrame(FrameCommands.CONNECTED);
+        connectedFrame.addHeader("version", "1.2");
+        return connectedFrame;
     }
 
     private StompFrame createErrorFrame(String message, String body, String receiptId, String messageId) {
-        Hashtable<String, String> sendHeaders = new Hashtable<>();
-        sendHeaders.put("message", message);
-        if (receiptId != null)
-            sendHeaders.put("receipt-id", receiptId);
-        if (messageId != null)
-            sendHeaders.put("message-id", messageId);
-        return new StompFrame(FrameCommands.ERROR, sendHeaders, body);
-    }
+        StompFrame errorFrame = new StompFrame(FrameCommands.ERROR);
+        errorFrame.setBody(body);
 
-    private StompFrame createErrorFrame(String message, String body, String receiptId) {
-        return createErrorFrame(message, body, receiptId, null);
+        errorFrame.addHeader("message", message);
+        if (receiptId != null)
+            errorFrame.addHeader("receipt-id", receiptId);
+        if (messageId != null)
+            errorFrame.addHeader("message-id", messageId);
+
+        return errorFrame;
     }
 
     private StompFrame createErrorFrame(String message, String body) {
@@ -46,9 +43,9 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
     }
 
     private StompFrame createReceiptFrame(String receiptId){
-        Hashtable<String, String> receiptHeaders = new Hashtable<>();
-        receiptHeaders.put("receipt-id", String.valueOf(receiptId));
-        return new StompFrame(FrameCommands.RECEIPT, receiptHeaders, "");
+        StompFrame receiptFrame = new StompFrame(FrameCommands.RECEIPT);
+        receiptFrame.addHeader("receipt-id", receiptId);
+        return receiptFrame;
     }
 
     @Override
@@ -93,19 +90,16 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
 
         if(connections.checkLogin(loginName)) {
             if (connections.checkPassword(loginName, passcode)) {
-                //connections.send(connectionId, createConnectedFrame());
                 System.out.println(loginName + " logged in");
                 return createConnectedFrame();
             } else {
                 //ERROR : wrong password
-                //connections.send(connectionId, createErrorFrame("Invalid password", ""));
                 shouldTerminate = true;
                 return createErrorFrame("Invalid password", "");
             }
         } else {
             //login doesn't exist => create new user
             connections.register(loginName, passcode);
-            //connections.send(connectionId, createConnectedFrame());
             System.out.println(loginName + " registered");
             return createConnectedFrame();
         }
@@ -124,22 +118,23 @@ public class StompProtocol implements StompMessagingProtocol<StompFrame> {
             return createErrorFrame("User is not subscribed to this channel", "");
         }
 
-        if (!body.isEmpty()) {
-            //Send MESSAGE frame
-            Hashtable<String, String> sendHeaders = new Hashtable<>();
-            sendHeaders.put("destination", destination);
-            sendHeaders.put("subscription", String.valueOf(subId));
-            sendHeaders.put("message-id", String.valueOf(assignMsgId()));
-            connections.send(destination, new StompFrame(FrameCommands.MESSAGE, sendHeaders, body));
-
-            //Send RECEIPT frame if needed
-            if(receiptId != null)
-                return createReceiptFrame(receiptId);
-            return null;
-        } else {
+        if (body.isEmpty()) {
             // ERROR : missing body
             return createErrorFrame("Missing body", "");
         }
+
+        //Send MESSAGE frame
+        StompFrame sendFrame = new StompFrame(FrameCommands.MESSAGE);
+        sendFrame.addHeader("destination", destination);
+        sendFrame.addHeader("subscription", String.valueOf(subId));
+        sendFrame.addHeader("message-id", String.valueOf(assignMsgId()));
+        sendFrame.setBody(body);
+        connections.send(destination, sendFrame);
+
+        //Send RECEIPT frame if needed
+        if(receiptId != null)
+            return createReceiptFrame(receiptId);
+        return null;
     }
 
     private StompFrame subscribe(int connectionId, String destination, int subId, String receiptId){
