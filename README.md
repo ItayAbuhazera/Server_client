@@ -1,11 +1,35 @@
 # STOMP Based Server & Client
+Our project involved creating a messaging system using the STOMP (Simple Text Oriented Messaging Protocol) protocol. We implemented a server-side application in Java and a client-side application in C++ to facilitate real-time communication between multiple clients.
+
+## Project Goals
+* Experience with socket programming and network communication in Java
+* Familiarity with socket programming in C++ for creating a networked client application
+* Practice multithreading and concurrent programming in both Java and C++
+* Knowledge of integrating applications written in different languages (Java and C++)
+* Practice handling data serialization and deserialization across different platforms
+* Experience working on a large-scale project where not all code is written by us
+* Identifying and resolving issues related to network connectivity, protocol compliance, and performance optimization
+
+## Table of Contents
+* [Overview](#overview)
+* [Quick Start](#quick-start)
+* [Game Events](#game-events)
+* [STOMP Frame Format](#stomp-frame-format)
+* [Client Side](#client-side)
+  - [Client Overview](#client-overview)
+  - [Client Commands](#client-commands)
+  - [Client Frames](#client-frames)
+* [Server Side](#server-side)
+  - [Server Overview](#server-overview)
+  - [Server Frames](#server-frames)
+
 ### Overview
 The world cup is upon us, and you want to stay updated. Thus, we implemented a ”community-led” world cup update subscription
 service. Users can subscribe to a game channel and report and receive reports
 about the game to and from the other subscribed users.
 
-The communication between the client and the server is based on STOMP frames. The client sends a frame to the server, which parses the
-frame, interpets the command and processes it. Finally a reply frame is sent back to the client.
+The communication between the client and the server is based on STOMP (Simple Text Oriented Messaging Protocol) frames. The client sends a frame to the server, which parses the
+frame, interpets the command and processes it. Finally a reply frame is sent back to the relevant client(/s).
 
 ### Quick Start
 **Run Server**  
@@ -46,7 +70,7 @@ Game events will be saved in JSON format and will be used to report by the clien
 An  example of how this file would look can be found in [client/data/events1.json](client/data/events1.json).
 
 ### STOMP Frame Format
-This section describes the format of STOMP messages/data packets, as well as the semantics of the data packet exchanges.
+This section describes the format of STOMP (Simple Text Oriented Messaging Protocol) messages/data packets, as well as the semantics of the data packet exchanges.
 A STOMP frame has the following general format:
 ```
 < StompCommand >  
@@ -76,7 +100,7 @@ id : 1
 ```  
 
 ## Client Side
-### Overview
+### Client Overview
 The client uses two threads - one reading the keyboard and writing to the socket, and the other reading from the socket and
 outputting. The client first needs to connect to the server, then he can use the built-in commands to send and recieve messages
 from the server.
@@ -241,7 +265,7 @@ receipt :77
 
 
 ## Server Side
-### Overview
+### Server Overview
 A STOMP server is modeled as a set of topics (queues) to which messages can
 be sent. Each client can subscribe to one topic or more and it can send messages
 to any of the topics. Every message sent to a topic is being forwarded by the
